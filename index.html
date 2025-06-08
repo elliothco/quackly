@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <!--
+            Ensures no old Service Workers interfere with page navigation or caching,
+            unregistering existing ones and registering a no-op Service Worker for cleanup.
+        -->
+        <script>
+            if ("serviceWorker" in navigator) {
+                navigator.serviceWorker
+                    .getRegistrations()
+                    .then((rs) => Promise.all(rs.map((r) => r.unregister())))
+                    .then(() => navigator.serviceWorker.register("/sw.js"))
+                    .catch(() => {});
+            }
+        </script>
+        <meta charset="UTF-8" />
+        <link rel="icon" type="image/svg+xml" href="/search.svg" />
+        <!-- Preconnect to Google Fonts domains to speed up font loading. -->
+        <link
+            rel="preconnect"
+            href="https://fonts.googleapis.com"
+            crossorigin="anonymous"
+        />
+        <link
+            rel="preconnect"
+            href="https://fonts.gstatic.com"
+            crossorigin="anonymous"
+        />
+        <!-- Preload the Inter font stylesheet to ensure it loads early for better FCP. -->
+        <link
+            rel="preload"
+            as="style"
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+        />
+        <!-- Link the Inter font stylesheet, initially loading without blocking rendering. -->
+        <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+            media="print"
+            onload="this.media='all'"
+        />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Quackly</title>
+        <meta
+            name="description"
+            content="A better default search engine (with bangs!)"
+        />
+    </head>
+    <body>
+        <!-- This div is the mount point for the main application (Quackly's UI). -->
+        <div id="app"></div>
+        <!-- Loads the main application script that renders the UI and handles logic. -->
+        <script type="module" src="/src/main.ts"></script>
+    </body>
+</html>

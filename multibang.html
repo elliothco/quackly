@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <!--
+            Ensures no old Service Workers interfere with page navigation or caching,
+            unregistering existing ones and registering a no-op Service Worker for cleanup.
+        -->
+        <script>
+            if ("serviceWorker" in navigator) {
+                navigator.serviceWorker
+                    .getRegistrations()
+                    .then((rs) => Promise.all(rs.map((r) => r.unregister())))
+                    .then(() => navigator.serviceWorker.register("/sw.js"))
+                    .catch(() => {});
+            }
+        </script>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Multi-Search</title>
+        <style>
+            /*
+             * Defines the color palette for the application.
+             * These should ideally match variables in global.css if linked.
+             */
+            :root {
+                --gray-100: #f7f7f7;
+                --gray-200: #eaeaea;
+                --gray-400: #a0a0a0;
+                --gray-600: #666;
+                --gray-800: #333;
+                --gray-900: #1a1a1a;
+                --blue-100: #e0f2fe;
+                --blue-200: #bfdbfe;
+                --blue-300: #93c5fd; /* For dark mode link color */
+                --blue-400: #60a5fa;
+                --blue-500: #3b82f6;
+                --blue-600: #2563eb;
+                --blue-700: #1d4ed8;
+                --blue-800: #1f2937; /* For dark mode link hover background */
+                --blue-900: #1e3a8a; /* For dark mode link background */
+                --red-700: #b91c1c;
+                --red-400: #ef4444; /* For dark mode warning text */
+            }
+
+            body {
+                font-family:
+                    system-ui,
+                    -apple-system,
+                    BlinkMacSystemFont,
+                    "Segoe UI",
+                    Roboto,
+                    Oxygen,
+                    Ubuntu,
+                    Cantarell,
+                    "Open Sans",
+                    "Helvetica Neue",
+                    sans-serif;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                margin: 0;
+                background-color: var(--gray-100);
+                color: var(--gray-800);
+                line-height: 1.6;
+                padding: 2em;
+            }
+            .container {
+                text-align: center;
+                padding: 2em;
+                background-color: white;
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                max-width: 500px;
+                width: 100%;
+            }
+            h1 {
+                font-size: 2em;
+                margin-bottom: 1em;
+            }
+            .message {
+                font-size: 1.1em;
+                color: var(--gray-600);
+            }
+            .loader {
+                border: 4px solid #f3f3f3;
+                border-top: 4px solid var(--blue-600);
+                border-radius: 50%;
+                width: 30px;
+                height: 30px;
+                animation: spin 1s linear infinite;
+                margin: 20px auto;
+            }
+            @keyframes spin {
+                0% {
+                    transform: rotate(0deg);
+                }
+                100% {
+                    transform: rotate(360deg);
+                }
+            }
+            #openAllButton {
+                background-color: var(--blue-600);
+                color: white;
+                border: none;
+                padding: 0.8em 1.5em;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 1.1em;
+                margin-top: 1.5em;
+                transition: background-color 0.2s ease-in-out;
+            }
+            #openAllButton:hover {
+                background-color: var(--blue-700);
+            }
+            .hidden {
+                display: none;
+            }
+            .warning {
+                color: var(--red-700);
+                font-weight: bold;
+            }
+            /*
+             * These styles for `.results-list` are unused as the element was removed from the HTML,
+             * but are kept for reference if it is re-added in the future.
+             */
+            .results-list {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+                text-align: left;
+            }
+            .results-list li {
+                margin-bottom: 0.8em;
+            }
+            .results-list li a {
+                display: inline-block;
+                padding: 0.6em 1em;
+                background-color: var(--blue-100);
+                color: var(--blue-700);
+                text-decoration: none;
+                border-radius: 6px;
+                transition:
+                    background-color 0.2s,
+                    transform 0.1s;
+                word-break: break-word;
+            }
+            .results-list li a:hover {
+                background-color: var(--blue-200);
+                text-decoration: none;
+                transform: translateY(-2px);
+            }
+            .results-list li a:active {
+                transform: translateY(0);
+            }
+
+            /* Dark mode styles */
+            @media (prefers-color-scheme: dark) {
+                body {
+                    background-color: var(--gray-900);
+                    color: var(--gray-200);
+                }
+                .container {
+                    background-color: var(--gray-800);
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+                }
+                .message {
+                    color: var(--gray-400);
+                }
+                .loader {
+                    border-top: 4px solid var(--blue-400);
+                }
+                #openAllButton {
+                    background-color: var(--blue-500);
+                }
+                #openAllButton:hover {
+                    background-color: var(--blue-400);
+                }
+                .warning {
+                    color: var(--red-400);
+                }
+                .results-list li a {
+                    background-color: var(--blue-900);
+                    color: var(--blue-300);
+                }
+                .results-list li a:hover {
+                    background-color: var(--blue-800);
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <!-- State displayed during automatic tab opening -->
+            <div id="automatic-state">
+                <h1>Opening Multiple Tabs…</h1>
+                <div class="loader"></div>
+                <p class="message">
+                    Please wait, your search results are opening.
+                </p>
+            </div>
+
+            <!-- Fallback state displayed if automatic tab opening is blocked -->
+            <div id="fallback-state" class="hidden">
+                <h1>Please Enable Pop-Ups</h1>
+                <p class="warning">Your browser blocked automatic tabs.</p>
+                <p class="message">
+                    Please allow pop-ups for <strong id="site-host"></strong> in
+                    your browser settings, then:
+                </p>
+                <button id="openAllButton">Open Tabs</button>
+                <br />
+                <br />
+                <p class="message">
+                    If you do that, going forward you will be able to open
+                    multiple tabs automatically instead.
+                </p>
+                <br />
+                <br />
+            </div>
+        </div>
+
+        <!-- Imports the JavaScript module that handles parsing multi-bang queries and opening multiple tabs. -->
+        <script type="module" src="/src/multibang-processor.ts"></script>
+    </body>
+</html>

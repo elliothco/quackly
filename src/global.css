@@ -1,0 +1,695 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+/*
+ * Font fallback to Arial with adjusted metrics to closely match Inter,
+ * improving Cumulative Layout Shift (CLS) before Inter loads.
+ */
+@font-face {
+    font-family: "Inter Fallback";
+    size-adjust: 107%;
+    ascent-override: 90%;
+    src: local("Arial");
+}
+
+/*
+ * Root CSS variables for light mode, defining the color palette
+ * and common styling values.
+ */
+:root {
+    /* Primary font stack, with Inter and a custom fallback. */
+    font-family:
+        Inter,
+        "Inter Fallback",
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Oxygen,
+        Ubuntu,
+        Cantarell,
+        "Open Sans",
+        "Helvetica Neue",
+        sans-serif;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
+    /* Light Mode Variables (Default) */
+    --bg: #fafafa;
+    --text-primary: #1a1a1a;
+    --text-secondary: #666;
+    --border: #e1e5e9;
+    --surface: #fff;
+    --input-bg: #f8f9fa;
+    --input-border: #e1e5e9;
+    --shadow: rgba(0, 0, 0, 0.04);
+    --highlight-bg: #f0f8ff;
+    --highlight-text: #0066cc;
+    --toast-bg: rgba(0, 0, 0, 0.85);
+    --toast-text: #fff;
+    --toast-shadow: rgba(0, 0, 0, 0.2);
+}
+
+/* Universal box-sizing for consistent layout. */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Full viewport height and width for body and html. */
+html,
+body {
+    height: 100%;
+    width: 100%;
+}
+
+/* Base body styles. */
+body {
+    line-height: 1.5;
+    font-weight: 400;
+    font-size: 16px;
+    color: var(--text-primary);
+    background: var(--bg);
+}
+
+/* Heading styles. */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+/* Link styles. */
+a {
+    color: #0066cc;
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+
+/* Button reset. */
+button {
+    font: inherit;
+    border: none;
+    background: none;
+    cursor: pointer;
+}
+
+/* Input font inheritance. */
+input,
+textarea,
+select {
+    font: inherit;
+}
+
+/* Main container layout for vertical centering. */
+.main-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+}
+
+/* Content wrapper for max-width and internal spacing. */
+.content-wrapper {
+    max-width: 600px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+}
+
+/* Header section styles. */
+.header {
+    text-align: center;
+}
+.title {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+.subtitle {
+    font-size: 1.125rem;
+    color: var(--text-secondary);
+}
+
+/* Search section styles. */
+.search-section {
+    text-align: center;
+}
+/* Search input container styling, including focus states. */
+.search-container {
+    display: flex;
+    align-items: center;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 4px;
+    box-shadow: 0 2px 8px var(--shadow);
+    transition:
+        border-color 0.2s,
+        box-shadow 0.2s;
+}
+.search-container:focus-within {
+    border-color: #0066cc;
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+.search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 1rem 1.25rem;
+    font-size: 1.125rem;
+    background: transparent;
+}
+.search-input::placeholder {
+    color: #999;
+}
+.search-button {
+    padding: 0.75rem;
+    border-radius: 8px;
+    color: var(--text-secondary);
+    margin-right: 4px;
+    transition:
+        background 0.2s,
+        color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.search-button:hover {
+    background: #f0f0f0;
+    color: #0066cc;
+}
+/* Hint text below the search bar. */
+.search-hint {
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+.current-default-hint {
+    font-weight: 600;
+    color: var(--highlight-text);
+    background: var(--highlight-bg);
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+}
+
+/* Setup and Settings sections styling. */
+.setup-section,
+.settings-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px var(--shadow);
+}
+.setup-section h3,
+.settings-section h3 {
+    font-size: 1.125rem;
+    margin-bottom: 0.75rem;
+}
+.setup-section p,
+.setting-subtitle {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+/* URL input for browser setup. */
+.url-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 8px;
+    padding: 4px;
+}
+.url-input {
+    flex: 1;
+    padding: 0.75rem;
+    border: none;
+    background: transparent;
+    font-family:
+        "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas,
+        "Courier New", monospace;
+    font-size: 0.875rem;
+    color: #444;
+}
+/* Copy button for the URL. */
+.copy-button {
+    padding: 0.75rem;
+    color: var(--text-secondary);
+    border-radius: 6px;
+    transition:
+        background 0.2s,
+        color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.copy-button:hover {
+    background: #e9ecef;
+}
+.copy-button.copied {
+    color: #28a745;
+    background: #d4edda;
+}
+
+/* Generic setting group layout and styles. */
+.setting-group {
+    display: flex;
+    align-items: center;
+    gap: 1rem; /* Default gap for generic settings */
+    margin-bottom: 0.75rem;
+}
+.setting-label {
+    min-width: 100px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    flex-shrink: 0;
+}
+.setting-label-checkbox {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+}
+.setting-input {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--input-border);
+    border-radius: 6px;
+    background: var(--input-bg);
+    font-size: 0.875rem;
+    transition:
+        border-color 0.2s,
+        background 0.2s,
+        box-shadow 0.2s;
+}
+.setting-input:focus {
+    outline: none;
+    border-color: #0066cc;
+    background: #fff;
+    box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
+}
+.setting-checkbox {
+    width: 1.25rem;
+    height: 1.25rem;
+    cursor: pointer;
+    accent-color: #0066cc;
+    flex-shrink: 0;
+}
+.save-button {
+    background: #0066cc;
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    transition: background 0.2s;
+    flex-shrink: 0;
+}
+.save-button:hover {
+    background: #005bb5;
+}
+.save-button:active {
+    background: #004999;
+}
+.current-note {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+}
+.current-default-display {
+    font-weight: 600;
+    color: #0066cc;
+}
+
+/* Styles for setting hints, ensuring proper indentation. */
+.setting-hint {
+    font-size: 0.75rem;
+    color: #888;
+    margin-top: -0.25rem;
+    margin-bottom: 0.75rem;
+    /* Indent to align with checkbox/input in a setting-group */
+    padding-left: calc(1.25rem + 1rem);
+}
+
+/* Bang-specific settings (e.g., DuckDuckGo, Google) */
+.bang-specific-setting-group.ddg-specific,
+.bang-specific-setting-group.g-specific {
+    /* Controlled by JS to toggle display */
+    display: none;
+    /* Tighter gap for checkbox/label pairs in these specific groups */
+    gap: 0.75rem;
+}
+
+.bang-specific-setting-group:last-of-type {
+    margin-bottom: 0.75rem;
+}
+
+.bang-specific-setting-hint {
+    /* Controlled by JS to toggle display */
+    display: none;
+    font-size: 0.75rem;
+    color: #888;
+    margin-top: -0.25rem;
+    margin-bottom: 0.75rem;
+    /* Indent for checkbox (1.25rem) + specific group gap (0.75rem) */
+    padding-left: calc(1.25rem + 0.75rem);
+}
+
+/* Specific adjustment for DuckAssist hint due to different element order. */
+.bang-specific-setting-group
+    #duck-assist-select
+    + .setting-label-checkbox
+    ~ .bang-specific-setting-hint {
+    padding-left: 0;
+}
+
+/* Highlight style for bang triggers and current default. */
+.bang-highlight {
+    font-weight: 600;
+    color: #0066cc;
+    background: #f0f8ff;
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+/* Info and Footer sections. */
+.info-section {
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+.footer {
+    margin-top: 3rem;
+    text-align: center;
+    font-size: 0.875rem;
+    color: #999;
+}
+.footer a {
+    color: #666;
+    font-weight: 500;
+}
+.footer a:hover {
+    color: #0066cc;
+}
+
+/* Toast notification styling. */
+.toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100%);
+    background: var(--toast-bg);
+    color: var(--toast-text);
+    padding: 0.75rem 1.25rem;
+    border-radius: 6px;
+    opacity: 0;
+    transition:
+        opacity 0.3s,
+        transform 0.3s;
+    z-index: 1000;
+    pointer-events: none;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 12px var(--toast-shadow);
+}
+.toast.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Responsive adjustments for smaller screens. */
+@media (max-width: 640px) {
+    .main-container {
+        padding: 1rem;
+    }
+    .content-wrapper {
+        gap: 2rem;
+    }
+    .title {
+        font-size: 2.5rem;
+    }
+    .search-input {
+        font-size: 1rem;
+        padding: 0.875rem 1rem;
+    }
+    /* Stack setting groups vertically. */
+    .setting-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    .setting-label {
+        min-width: auto;
+    }
+    .save-button {
+        margin-left: 0;
+        margin-top: 0.5rem;
+    }
+    .current-note {
+        text-align: left;
+    }
+
+    /* Adjustments for responsive alignment of all hints. */
+    .setting-hint,
+    .bang-specific-setting-hint {
+        padding-left: 0;
+        margin-left: 0;
+        margin-top: 0.25rem;
+    }
+
+    /* Add space above specific setting groups in responsive view. */
+    .bang-specific-setting-group.ddg-specific,
+    .bang-specific-setting-group.g-specific {
+        margin-top: 1rem;
+    }
+}
+
+/* Styling for custom bangs section. */
+#custom-bangs-section {
+    margin-top: 1rem;
+}
+
+/* Form for adding custom bangs, stacking inputs vertically. */
+#add-custom-bang-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+/* Make custom bang inputs full width. */
+#add-custom-bang-form .setting-input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Align add button to the left. */
+#add-custom-bang-form .save-button {
+    align-self: flex-start;
+}
+
+/* Dark Mode Styles for `prefers-color-scheme: dark`. */
+@media (prefers-color-scheme: dark) {
+    /* Dark mode color variables. */
+    :root {
+        --bg: #1a1a1a;
+        --surface: #2d2d2d;
+        --border: #444;
+        --text-primary: #f0f0f0;
+        --text-secondary: #a0a0a0;
+        --input-bg: #222222;
+        --input-border: #555;
+        --primary: #5cafff;
+        --primary-hover: #3a8ee0;
+        --shadow: rgba(0, 0, 0, 0.2);
+        --highlight-bg: rgba(92, 175, 255, 0.15);
+        --highlight-text: var(--primary);
+        --toast-bg: rgba(255, 255, 255, 0.9);
+        --toast-text: #000;
+        --toast-shadow: rgba(0, 0, 0, 0.2);
+    }
+
+    /* Apply dark mode variables to general elements. */
+    body {
+        background: var(--bg);
+        color: var(--text-primary);
+    }
+    a {
+        color: var(--primary);
+    }
+
+    /* Header elements in dark mode. */
+    .title {
+        color: var(--text-primary);
+    }
+    .subtitle {
+        color: var(--text-secondary);
+    }
+
+    /* Containers and inputs in dark mode. */
+    .search-container,
+    .setup-section,
+    .settings-section {
+        background: var(--surface);
+        border-color: var(--border);
+        box-shadow: 0 2px 8px var(--shadow);
+    }
+    .search-container:focus-within {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(92, 175, 255, 0.2);
+    }
+
+    .search-input {
+        color: var(--text-primary);
+    }
+    .search-input::placeholder {
+        color: var(--text-secondary);
+    }
+
+    .url-input,
+    .setting-input {
+        background: var(--input-bg);
+        color: var(--text-primary);
+        border-color: var(--input-border);
+    }
+    .setting-input:focus {
+        background: var(--surface);
+        border-color: var(--primary);
+        box-shadow: 0 0 0 2px rgba(92, 175, 255, 0.2);
+    }
+
+    .url-container {
+        background: var(--input-bg);
+        border-color: var(--input-border);
+    }
+    .url-input {
+        color: var(--text-primary);
+    }
+
+    /* Button styles in dark mode. */
+    .search-button,
+    .copy-button {
+        color: var(--text-secondary);
+    }
+    .search-button:hover {
+        background: var(--border);
+        color: var(--primary);
+    }
+    .copy-button:hover {
+        background: var(--border);
+    }
+    .copy-button.copied {
+        color: #76c78c;
+        background: #2a4730;
+    }
+
+    .save-button {
+        background: var(--primary);
+        color: #fff;
+    }
+    .save-button:hover {
+        background: var(--primary-hover);
+    }
+    .save-button:active {
+        background: #2a6db5;
+    }
+
+    /* Text hints & footer in dark mode. */
+    .search-hint,
+    .setup-section p,
+    .current-note,
+    .setting-hint,
+    .bang-specific-setting-hint,
+    .info-section,
+    .footer {
+        color: var(--text-secondary);
+    }
+    .setup-section h3,
+    .settings-section h3,
+    .setting-label,
+    .setting-label-checkbox {
+        color: var(--text-primary);
+    }
+
+    /* Highlighted elements in dark mode. */
+    .current-default-hint {
+        background: var(--highlight-bg);
+        color: var(--highlight-text);
+    }
+    .current-default-display {
+        color: var(--primary);
+    }
+    .bang-highlight {
+        background: var(--highlight-bg);
+        color: var(--highlight-text);
+    }
+
+    /* Footer links in dark mode. */
+    .footer a {
+        color: var(--text-secondary);
+    }
+    .footer a:hover {
+        color: var(--primary);
+    }
+
+    /* Checkbox in dark mode. */
+    .setting-checkbox {
+        accent-color: var(--primary);
+    }
+
+    /* Toast in dark mode. */
+    .toast {
+        background: var(--toast-bg);
+        color: var(--toast-text);
+        box-shadow: 0 4px 12px var(--toast-shadow);
+    }
+}
+/* Feature promo box styling. */
+.feature-promo-box {
+    background: var(--highlight-bg);
+    color: var(--highlight-text);
+    border: 1px solid rgba(0, 102, 204, 0.2);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+.feature-promo-box .emoji {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.feature-promo-box p {
+    margin: 0;
+}
+
+/* Dark mode specific styles for the promo box. */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --dark-mode-promo-border: rgba(92, 175, 255, 0.3);
+    }
+    .feature-promo-box {
+        border-color: var(--dark-mode-promo-border);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+}

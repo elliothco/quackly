@@ -11,8 +11,8 @@ Quackly enhances your search experience, allowing you to quickly search websites
 *   **Custom Bangs:** Add your own short, memorable bangs for any website.
 *   **Built-in Custom Bangs:** Access popular sites not included in DuckDuckGo's bang list.
 *   **Search Engine Enhancements:**
+    *   **Option to change `!r` to `site:reddit.com` search.**
     *   **Disable Google AI Overview.** (when using `!g` as default bang)
-    *   **Option to change `!r` to `site:reddit.com` search.** (when using `!ddg` as default bang)
     *   **Disable DuckDuckGo search ads.** (when using `!ddg` as default bang)
     *   **Disable DuckDuckGo promotions.** (when using `!ddg` as default bang)
     *   **Control DuckAssist (AI) appearance.** (when using `!ddg` as default bang)

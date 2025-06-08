@@ -42,7 +42,7 @@ Quackly is designed to be easily self-hostable, giving you full control and trus
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/YOUR_GITHUB_USERNAME/quackly.git
+    git clone https://github.com/elliothco/quackly.git
     cd quackly
     ```
 2.  **Install dependencies:**
@@ -78,10 +78,12 @@ Quackly acts as an intermediary, parsing your search query and **performing all 
 
 *   **DuckDuckGo Bangs:** [https://duckduckgo.com/bang](https://duckduckgo.com/bang) (Quackly supports all standard DuckDuckGo bangs in addition to its custom ones.)
 
-## 📄 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
-
 ## 🙏 Acknowledgements
 
 Quackly is built upon **Theo (t3.gg)'s [Unduck](https://github.com/t3dotgg/unduck)**.
+
+**AI-Generated Code:** Most of the code for Quackly was generated using various large language models (LLMs). Shout out to [T3 Chat](https://t3.chat)!
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.

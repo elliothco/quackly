@@ -109,9 +109,10 @@ bangTriggers.forEach((trigger) => {
   }
 
   // Construct the search URL, replacing the query placeholder.
+  // new — handle both {{{s}}} and %s
   let searchUrl = selectedBang.u.replace(
-    "{{{s}}}",
-    encodeURIComponent(cleanQueryForThisBang).replace(/%2F/g, "/"), // Preserve slashes for URLs.
+    /\{\{\{s\}\}\}|%s/g,
+    encodeURIComponent(cleanQueryForThisBang).replace(/%2F/g, "/"),
   );
 
   // Apply DuckDuckGo-specific settings if it's the 'ddg' bang and default settings apply.

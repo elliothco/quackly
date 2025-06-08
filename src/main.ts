@@ -32,12 +32,25 @@ const getBoolWithDefault = (k: string, def: boolean): boolean => {
 // Utility to set a value in localStorage.
 const setLS = (k: string, v: any): void => localStorage.setItem(k, String(v));
 
-// Initialize custom bangs from localStorage.
-let customBangs: Bang[] = JSON.parse(getStr(LS_KEYS.customBangs, "[]"));
+// Consistent base URL for the application, including sub-paths if any.
+const BASE_URL = window.location.origin + window.location.pathname;
+// Consistent fallback bang to use if default is invalid or removed.
+const FALLBACK_BANG = "ddg";
+
+// Initialize custom bangs from localStorage, with error handling for corruption.
+let customBangs: Bang[] = [];
+try {
+  customBangs = JSON.parse(getStr(LS_KEYS.customBangs, "[]"));
+} catch (e) {
+  console.error("Error parsing custom bangs from localStorage:", e);
+  customBangs = []; // Reset if corrupted
+  setLS(LS_KEYS.customBangs, "[]"); // Clear corrupted data in localStorage
+}
+
 // Combine built-in and custom bangs for comprehensive search capabilities.
 const allBangs: Bang[] = [...builtInBangs, ...customBangs];
-// Get the user's default bang trigger, defaulting to 'ddg' (DuckDuckGo).
-const defaultTrigger = getStr(LS_KEYS.defaultBang, "ddg");
+// Get the user's default bang trigger, defaulting to FALLBACK_BANG.
+const defaultTrigger = getStr(LS_KEYS.defaultBang, FALLBACK_BANG);
 
 // Displays a temporary toast notification at the bottom of the screen.
 function showToast(msg: string): void {
@@ -54,8 +67,14 @@ function showToast(msg: string): void {
 
 // Renders the main application UI, including search interface and settings.
 function renderApp(): void {
-  const app = document.querySelector<HTMLDivElement>("#app")!;
-  const searchEngineUrl = `${window.location.origin}?q=%s`;
+  const app = document.querySelector<HTMLDivElement>("#app");
+  if (!app) {
+    console.error("#app element not found!");
+    return;
+  }
+
+  // Use BASE_URL for the search engine setup URL.
+  const searchEngineUrl = `${BASE_URL}?q=%s`;
   app.innerHTML = `
 <div class="main-container">
   <div class="content-wrapper">
@@ -313,8 +332,8 @@ function renderApp(): void {
 </div>`;
 
   // Helper functions for DOM selection.
-  const $ = <T extends HTMLElement>(sel: string): T =>
-    app.querySelector(sel) as T;
+  const $ = <T extends HTMLElement>(sel: string): T | null =>
+    app.querySelector(sel);
   const $all = <T extends HTMLElement>(sel: string): NodeListOf<T> =>
     app.querySelectorAll(sel);
 
@@ -325,18 +344,19 @@ function renderApp(): void {
   // Handles the main search action, redirecting to the determined URL.
   const doSearch = (): void => {
     const q = searchInput.value.trim();
-    if (q) window.location.href = `?q=${encodeURIComponent(q)}`;
+    if (q) window.location.href = `${BASE_URL}?q=${encodeURIComponent(q)}`;
   };
-  searchInput.addEventListener(
+  searchInput?.addEventListener(
     "keydown",
     (e) => e.key === "Enter" && doSearch(),
   );
-  searchButton.addEventListener("click", doSearch);
+  searchButton?.addEventListener("click", doSearch);
 
   // Handles copying the search engine URL to clipboard.
   const copyButton = $(".copy-button");
   const urlInput = $(".url-input") as HTMLInputElement;
-  copyButton.addEventListener("click", async () => {
+  copyButton?.addEventListener("click", async () => {
+    if (!urlInput) return;
     await navigator.clipboard.writeText(urlInput.value);
     const originalSVG = copyButton.innerHTML;
     copyButton.innerHTML = `
@@ -354,14 +374,18 @@ function renderApp(): void {
 
   const defaultBangInput = $("#default-bang-input") as HTMLInputElement;
   const saveDefaultBtn = $("#save-default-btn") as HTMLButtonElement;
-  defaultBangInput.value = `!${defaultTrigger}`;
+  if (defaultBangInput) {
+    defaultBangInput.value = `!${defaultTrigger}`;
+  }
 
   // Cleans the bang input value by removing leading '!' and trimming.
   const cleanBangInput = (value: string): string =>
     value.trim().toLowerCase().replace(/^!/, "");
 
-  defaultBangInput.addEventListener("blur", () => {
-    defaultBangInput.value = `!${cleanBangInput(defaultBangInput.value)}`;
+  defaultBangInput?.addEventListener("blur", () => {
+    if (defaultBangInput) {
+      defaultBangInput.value = `!${cleanBangInput(defaultBangInput.value)}`;
+    }
   });
 
   // References to DuckDuckGo-specific settings elements.
@@ -392,15 +416,17 @@ function renderApp(): void {
 
   // Handles multi-bang search enable/disable.
   const multiBangCheckbox = $("#multi-bang-checkbox") as HTMLInputElement;
-  multiBangCheckbox.checked = getBoolWithDefault(
-    LS_KEYS.multiBangEnabled,
-    true,
-  );
-  multiBangCheckbox.addEventListener("change", (e) => {
-    const isChecked = (e.target as HTMLInputElement).checked;
-    setLS(LS_KEYS.multiBangEnabled, isChecked);
-    showToast(`Multi-Bang Search: ${isChecked ? "enabled" : "disabled"}`);
-  });
+  if (multiBangCheckbox) {
+    multiBangCheckbox.checked = getBoolWithDefault(
+      LS_KEYS.multiBangEnabled,
+      true,
+    );
+    multiBangCheckbox.addEventListener("change", (e) => {
+      const isChecked = (e.target as HTMLInputElement).checked;
+      setLS(LS_KEYS.multiBangEnabled, isChecked);
+      showToast(`Multi-Bang Search: ${isChecked ? "enabled" : "disabled"}`);
+    });
+  }
 
   // Dynamically shows/hides bang-specific settings based on the current default bang.
   const updateBangSpecificSettings = (currentDefaultBang: string) => {
@@ -413,16 +439,18 @@ function renderApp(): void {
     );
 
     // Disable all bang-specific controls.
-    disableDdgAdsCheckbox.disabled = true;
-    disableDdgPromosCheckbox.disabled = true;
-    duckAssistSelect.disabled = true;
-    disableGoogleAiOverviewCheckbox.disabled = true;
+    if (disableDdgAdsCheckbox) disableDdgAdsCheckbox.disabled = true;
+    if (disableDdgPromosCheckbox) disableDdgPromosCheckbox.disabled = true;
+    if (duckAssistSelect) duckAssistSelect.disabled = true;
+    if (disableGoogleAiOverviewCheckbox)
+      disableGoogleAiOverviewCheckbox.disabled = true;
 
     // Reset default states for specific settings.
-    disableDdgAdsCheckbox.checked = false;
-    disableDdgPromosCheckbox.checked = false;
-    duckAssistSelect.value = "2";
-    disableGoogleAiOverviewCheckbox.checked = false;
+    if (disableDdgAdsCheckbox) disableDdgAdsCheckbox.checked = false;
+    if (disableDdgPromosCheckbox) disableDdgPromosCheckbox.checked = false;
+    if (duckAssistSelect) duckAssistSelect.value = "2";
+    if (disableGoogleAiOverviewCheckbox)
+      disableGoogleAiOverviewCheckbox.checked = false;
 
     // Show and enable settings relevant to DuckDuckGo if it's the default.
     if (currentDefaultBang === "ddg") {
@@ -431,19 +459,25 @@ function renderApp(): void {
       );
       ddgSpecificSettingHints.forEach((hint) => (hint.style.display = "block"));
 
-      disableDdgAdsCheckbox.disabled = false;
-      disableDdgPromosCheckbox.disabled = false;
-      duckAssistSelect.disabled = false;
+      if (disableDdgAdsCheckbox) disableDdgAdsCheckbox.disabled = false;
+      if (disableDdgPromosCheckbox) disableDdgPromosCheckbox.disabled = false;
+      if (duckAssistSelect) duckAssistSelect.disabled = false;
 
-      disableDdgAdsCheckbox.checked = getBoolWithDefault(
-        LS_KEYS.disableDdgAds,
-        true,
-      );
-      disableDdgPromosCheckbox.checked = getBoolWithDefault(
-        LS_KEYS.disableDdgPromos,
-        true,
-      );
-      duckAssistSelect.value = getStr(LS_KEYS.duckAssist, "2");
+      if (disableDdgAdsCheckbox) {
+        disableDdgAdsCheckbox.checked = getBoolWithDefault(
+          LS_KEYS.disableDdgAds,
+          true,
+        );
+      }
+      if (disableDdgPromosCheckbox) {
+        disableDdgPromosCheckbox.checked = getBoolWithDefault(
+          LS_KEYS.disableDdgPromos,
+          true,
+        );
+      }
+      if (duckAssistSelect) {
+        duckAssistSelect.value = getStr(LS_KEYS.duckAssist, "2");
+      }
     } else if (currentDefaultBang === "g") {
       // Show and enable settings relevant to Google if it's the default.
       googleSpecificSettingGroups.forEach(
@@ -453,16 +487,20 @@ function renderApp(): void {
         (hint) => (hint.style.display = "block"),
       );
 
-      disableGoogleAiOverviewCheckbox.disabled = false;
+      if (disableGoogleAiOverviewCheckbox)
+        disableGoogleAiOverviewCheckbox.disabled = false;
 
-      disableGoogleAiOverviewCheckbox.checked = getBool(
-        LS_KEYS.disableGoogleAi,
-      );
+      if (disableGoogleAiOverviewCheckbox) {
+        disableGoogleAiOverviewCheckbox.checked = getBool(
+          LS_KEYS.disableGoogleAi,
+        );
+      }
     }
   };
 
   // Event listener for saving the default bang setting.
-  saveDefaultBtn.addEventListener("click", () => {
+  saveDefaultBtn?.addEventListener("click", () => {
+    if (!defaultBangInput || !currentDefaultHint) return;
     const newBangValue = cleanBangInput(defaultBangInput.value);
     // Validate if the entered bang exists.
     if (!allBangs.some((b) => b.t === newBangValue)) {
@@ -480,19 +518,19 @@ function renderApp(): void {
   updateBangSpecificSettings(defaultTrigger);
 
   // Event listeners for DuckDuckGo specific settings.
-  disableDdgAdsCheckbox.addEventListener("change", (e) => {
+  disableDdgAdsCheckbox?.addEventListener("change", (e) => {
     const isChecked = (e.target as HTMLInputElement).checked;
     setLS(LS_KEYS.disableDdgAds, isChecked);
     showToast(`DuckDuckGo ads: ${isChecked ? "disabled" : "enabled"}`);
   });
 
-  disableDdgPromosCheckbox.addEventListener("change", (e) => {
+  disableDdgPromosCheckbox?.addEventListener("change", (e) => {
     const isChecked = (e.target as HTMLInputElement).checked;
     setLS(LS_KEYS.disableDdgPromos, isChecked);
     showToast(`DuckDuckGo promotions: ${isChecked ? "disabled" : "enabled"}`);
   });
 
-  duckAssistSelect.addEventListener("change", (e) => {
+  duckAssistSelect?.addEventListener("change", (e) => {
     const selectedValue = (e.target as HTMLSelectElement).value;
     setLS(LS_KEYS.duckAssist, selectedValue);
     const label = (e.target as HTMLSelectElement).options[
@@ -502,24 +540,26 @@ function renderApp(): void {
   });
 
   // Event listener for Google AI Overview setting.
-  disableGoogleAiOverviewCheckbox.addEventListener("change", (e) => {
+  disableGoogleAiOverviewCheckbox?.addEventListener("change", (e) => {
     const isChecked = (e.target as HTMLInputElement).checked;
     setLS(LS_KEYS.disableGoogleAi, isChecked);
     showToast(`Google AI Overview: ${isChecked ? "disabled" : "enabled"}`);
   });
 
   // Handles the !r site:reddit.com rewrite setting.
-  redditSiteSearchCheckbox.checked = getBoolWithDefault(
-    LS_KEYS.redditSiteSearch,
-    true,
-  );
-  redditSiteSearchCheckbox.addEventListener("change", (e) => {
-    const isChecked = (e.target as HTMLInputElement).checked;
-    setLS(LS_KEYS.redditSiteSearch, isChecked);
-    showToast(
-      `!r site:reddit.com search: ${isChecked ? "enabled" : "disabled"}`,
+  if (redditSiteSearchCheckbox) {
+    redditSiteSearchCheckbox.checked = getBoolWithDefault(
+      LS_KEYS.redditSiteSearch,
+      true,
     );
-  });
+    redditSiteSearchCheckbox.addEventListener("change", (e) => {
+      const isChecked = (e.target as HTMLInputElement).checked;
+      setLS(LS_KEYS.redditSiteSearch, isChecked);
+      showToast(
+        `!r site:reddit.com search: ${isChecked ? "enabled" : "disabled"}`,
+      );
+    });
+  }
 
   // Elements for custom bang management.
   const customBangsList = $("#custom-bangs-list");
@@ -529,14 +569,23 @@ function renderApp(): void {
 
   // Renders the list of custom bangs and attaches removal handlers.
   const renderCustom = (): void => {
+    if (!customBangsList) return;
     customBangsList.innerHTML = "";
     customBangs.forEach((b, idx) => {
       const row = document.createElement("div");
       row.className = "custom-bang-row";
-      row.innerHTML = `
-        <span>!${b.t} → ${b.d}</span>
-        <button data-idx="${idx}" class="remove-btn" title="Remove">✕</button>
-      `;
+
+      // XSS Fix: Create elements and set textContent instead of innerHTML
+      const span = document.createElement("span");
+      span.textContent = `!${b.t} → ${b.d}`;
+
+      const removeBtn = document.createElement("button");
+      removeBtn.textContent = "✕";
+      removeBtn.setAttribute("data-idx", String(idx));
+      removeBtn.className = "remove-btn";
+      removeBtn.title = "Remove";
+
+      row.append(span, removeBtn);
       customBangsList.append(row);
     });
 
@@ -552,18 +601,23 @@ function renderApp(): void {
         setLS(LS_KEYS.customBangs, JSON.stringify(customBangs));
 
         // Rebuild allBangs array after removal.
+        // Clear existing `allBangs` and push updated built-in and custom bangs.
         allBangs.splice(0, allBangs.length);
         allBangs.push(...builtInBangs, ...customBangs);
 
-        // If the removed bang was the default, reset default to !g.
-        if (removedBang === getStr(LS_KEYS.defaultBang)) {
-          setLS(LS_KEYS.defaultBang, "g");
-          defaultBangInput.value = "!g";
-          currentDefaultHint.textContent = "!g";
+        // If the removed bang was the default, reset default to FALLBACK_BANG.
+        if (
+          removedBang === getStr(LS_KEYS.defaultBang, FALLBACK_BANG) &&
+          defaultBangInput &&
+          currentDefaultHint
+        ) {
+          setLS(LS_KEYS.defaultBang, FALLBACK_BANG);
+          defaultBangInput.value = `!${FALLBACK_BANG}`;
+          currentDefaultHint.textContent = `!${FALLBACK_BANG}`;
           showToast(
-            `Custom bang !${removedBang} removed. Default bang reset to !g.`,
+            `Custom bang !${removedBang} removed. Default bang reset to !${FALLBACK_BANG}.`,
           );
-          updateBangSpecificSettings("g");
+          updateBangSpecificSettings(FALLBACK_BANG);
         } else {
           showToast(`Custom bang !${removedBang} removed.`);
         }
@@ -573,7 +627,9 @@ function renderApp(): void {
   };
 
   // Event listener for adding new custom bangs.
-  addCustomBangButton.addEventListener("click", () => {
+  addCustomBangButton?.addEventListener("click", () => {
+    if (!newBangInput || !newUrlInput) return;
+
     let bangTrigger = newBangInput.value.trim().toLowerCase();
     if (!bangTrigger) {
       showToast("Bang trigger cannot be empty.");
@@ -583,11 +639,17 @@ function renderApp(): void {
       bangTrigger = bangTrigger.substring(1);
     }
 
-    const bangUrlTemplate = newUrlInput.value.trim();
+    let bangUrlTemplate = newUrlInput.value.trim();
     if (!bangUrlTemplate) {
       showToast("URL template cannot be empty.");
       return;
     }
+
+    // Bug Fix: Normalize URL template by adding protocol if missing
+    if (!/^https?:\/\//i.test(bangUrlTemplate)) {
+      bangUrlTemplate = "https://" + bangUrlTemplate;
+    }
+
     // Validate that the URL template contains a placeholder for the query.
     if (
       !bangUrlTemplate.includes("{{{s}}}") &&
@@ -608,13 +670,13 @@ function renderApp(): void {
     // Attempt to extract domain for display purposes.
     let domain = "custom.com";
     try {
-      const tempUrl = bangUrlTemplate.split("{{{s}}}")[0];
-      const urlObj = new URL(
-        tempUrl.startsWith("http") ? tempUrl : `https://${tempUrl}`,
-      );
+      // Split the URL template at the placeholder to get the base part
+      const tempUrlPart = bangUrlTemplate.split(/\{\{\{s\}\}\}|%s/)[0];
+      const urlObj = new URL(tempUrlPart);
       domain = urlObj.hostname;
     } catch (e) {
-      // Ignore URL parsing errors if domain cannot be extracted.
+      // Ignore URL parsing errors if domain cannot be extracted, fallback to "custom.com".
+      console.warn("Could not parse domain for custom bang URL:", e);
     }
 
     const newCustomBang: Bang = {
@@ -655,7 +717,8 @@ function getBangredirectUrl(): string | null {
   // Multi-bang parsing logic: identifies all bangs in the query if enabled.
   if (isMultiBangEnabled) {
     // Regex to find bangs like "!bang" or " !bang" (preceded by space or start of string).
-    const bangRegex = /(^|\s)!([a-zA-Z0-9]+)(?=\s|$)/g;
+    // Bug Fix: Broaden regex to include hyphens and underscores for bang triggers.
+    const bangRegex = /(^|\s)!([a-zA-Z0-9_-]+)(?=\s|$)/g;
     let match;
     const foundBangPositions: { start: number; end: number }[] = [];
     const tempDetectedBangs: string[] = [];
@@ -687,7 +750,10 @@ function getBangredirectUrl(): string | null {
 
     // If multiple valid bangs are found, redirect to the multi-bang page.
     if (detectedBangs.length > 1) {
-      return `${window.location.origin}/multibang.html?q=${encodeURIComponent(
+      // Use BASE_URL for the multi-bang redirect to ensure correct pathing.
+      return `${
+        window.location.origin
+      }/multibang.html?q=${encodeURIComponent(
         queryWithoutBangs,
       )}&bangs=${encodeURIComponent(detectedBangs.join(","))}`;
     }
@@ -723,7 +789,7 @@ function getBangredirectUrl(): string | null {
   // Determine the default bang object to use if no explicit bang is found or for !r rewrite.
   const defaultBangObject =
     allBangs.find((b) => b.t === defaultTrigger) ||
-    builtInBangs.find((b) => b.t === "g"); // Fallback to Google if defaultTrigger is invalid.
+    builtInBangs.find((b) => b.t === FALLBACK_BANG); // Fallback to FALLBACK_BANG if defaultTrigger is invalid.
 
   // Apply the !r rewrite rule if enabled.
   if (
@@ -789,6 +855,17 @@ function getBangredirectUrl(): string | null {
 
 // Initiates the redirect to the determined search URL or renders the app if no query.
 function doRedirect(): void {
+  // Bug Fix: Prevent infinite loop if script is also included on multibang.html
+  if (window.location.pathname.endsWith("/multibang.html")) {
+    // This script should ideally not run on multibang.html,
+    // or multibang.html should handle its own redirection.
+    // If it *is* included, exit early to prevent immediate re-redirect.
+    console.warn(
+      "Script is running on multibang.html. Skipping redirect to prevent loop.",
+    );
+    return;
+  }
+
   const dest = getBangredirectUrl();
   if (dest) window.location.replace(dest);
 }

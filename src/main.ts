@@ -321,7 +321,6 @@ function renderApp(): void {
   const searchInput = $(".search-input") as HTMLInputElement;
   const searchButton = $(".search-button") as HTMLButtonElement;
   const currentDefaultHint = $(".current-default-hint");
-  // const currentDefaultDisplay = $(".current-default-display"); // This element is not present in the HTML.
 
   // Handles the main search action, redirecting to the determined URL.
   const doSearch = (): void => {
@@ -473,7 +472,6 @@ function renderApp(): void {
     }
     setLS(LS_KEYS.defaultBang, newBangValue);
     currentDefaultHint.textContent = `!${newBangValue}`;
-    // currentDefaultDisplay.textContent = `!${newBangValue}`; // This element is not present in the HTML.
     showToast(`Default bang set to !${newBangValue}`);
     updateBangSpecificSettings(newBangValue);
   });
@@ -562,7 +560,6 @@ function renderApp(): void {
           setLS(LS_KEYS.defaultBang, "g");
           defaultBangInput.value = "!g";
           currentDefaultHint.textContent = "!g";
-          // currentDefaultDisplay.textContent = "!g"; // This element is not present in the HTML.
           showToast(
             `Custom bang !${removedBang} removed. Default bang reset to !g.`,
           );

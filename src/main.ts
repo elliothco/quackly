@@ -306,7 +306,9 @@ function renderApp(): void {
   </div>
 
   <footer class="footer">
-    Based on Unduck by Theo on <a href="https://github.com/t3dotgg/unduck" target="_blank">GitHub</a>
+    Fully open source on <a href="https://github.com/elliothco/quackly" target="_blank">GitHub</a>.
+    <br />
+    Based on <a href="https://github.com/t3dotgg/unduck" target="_blank">Unduck by Theo</a>.
   </footer>
 </div>`;
 

@@ -48,6 +48,7 @@ async function updateBangSpecificSettings(
   ddgHints: readonly HTMLElement[],
   googleGroups: readonly HTMLElement[],
   googleHints: readonly HTMLElement[],
+  ddgCard: HTMLElement | null,
   controls: {
     ads: HTMLInputElement;
     promos: HTMLInputElement;
@@ -71,6 +72,7 @@ async function updateBangSpecificSettings(
   controls.googleAi.checked = settings.disableGoogleAi;
 
   const record = await catalog.lookupWithFull(settings.defaultBang);
+  if (ddgCard) ddgCard.hidden = record?.canonical !== "dax";
   if (record?.canonical === "dax") {
     for (const group of ddgGroups) group.style.display = "flex";
     for (const hint of ddgHints) hint.style.display = "block";
@@ -88,17 +90,16 @@ function renderApp(): void {
   if (!app) return;
 
   app.innerHTML = `
+<div class="app-shell">
+  <header class="topbar">
+    <a class="brand" href="./">Quackly</a>
+    <nav class="topbar-nav" aria-label="Primary">
+      <a class="nav-link" href="https://helium.computer/bangs" target="_blank" rel="noopener noreferrer">Bangs ↗</a>
+    </nav>
+  </header>
 <div class="main-container">
   <div class="content-wrapper">
     <header class="header">
-    <div class="feature-promo-box">
-          <span class="emoji"> 🎉 </span>
-          <p style="text-align: left;">
-            <strong>NEW: Check out Multi-Bang Search!</strong>
-            <br /> Search multiple sites at once.
-            Learn more in settings.
-          </p>
-    </div>
     <h1 class="title">
       Quackly
       <svg
@@ -128,67 +129,85 @@ function renderApp(): void {
       </svg>
     </h1>
     <p class="subtitle">Search, with superpowers.</p>
-    <br />
-      <p>Quickly search websites with bangs, even faster than DuckDuckGo. Enhance your search experience with extra and customizable features.</p>
-
-      <div class="info-section">
-        <p>
-          Find a shortcut in
-          <a href="https://helium.computer/bangs" target="_blank" rel="noopener noreferrer">
-            Helium's bang directory
-          </a>
-        </p>
-      </div>
     </header>
 
     <div class="search-section">
-      <div class="search-container">
-        <input
-          type="text"
-          class="search-input"
-          placeholder="Do a search (try !r for Reddit or !gi for Google Images)"
-          role="combobox"
-          aria-autocomplete="list"
-          aria-controls="search-suggestions"
-          aria-expanded="false"
-          autocomplete="off"
-          autofocus
-        />
-        <button class="search-button" title="Search" aria-label="Search">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"></circle>
-            <path d="m21 21-4.35-4.35"></path>
-          </svg>
-        </button>
+      <div class="search-wrap">
+        <div class="search-container">
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Search the web or type ! for bangs"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-controls="search-suggestions"
+            aria-expanded="false"
+            autocomplete="off"
+          />
+          <button class="search-button" title="Search" aria-label="Search">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+          </button>
+        </div>
+        <div
+          id="search-suggestions"
+          class="search-suggestions"
+          role="listbox"
+          aria-label="Bang suggestions"
+          hidden
+        ></div>
       </div>
-      <div
-        id="search-suggestions"
-        class="search-suggestions"
-        role="listbox"
-        aria-label="Bang suggestions"
-        hidden
-      ></div>
       <div class="search-hint">
         Press Enter to search • No bang? Uses
         <span class="current-default-hint"></span>
       </div>
+      <p class="search-tip">
+        Type <kbd>!</kbd> in the search box to browse Helium bangs.
+      </p>
     </div>
-    <div class="setup-section">
-      <h3>Browser Setup</h3>
-      <p>Add this URL as a custom search engine in your browser:</p>
-      <div class="url-container">
-        <input type="text" class="url-input" readonly />
-        <button class="copy-button" title="Copy URL" aria-label="Copy setup URL">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
-            <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
-          </svg>
+    <section class="setup-callout" id="setup" aria-labelledby="setup-title">
+      <div class="setup-expanded">
+        <div class="setup-topline">
+          <div class="setup-badge">Start here</div>
+          <button id="dismiss-setup" class="setup-dismiss" type="button">
+            Hide setup
+          </button>
+        </div>
+        <div class="setup-copy">
+          <h2 id="setup-title" tabindex="-1">Make Quackly your search engine</h2>
+          <p>Add this URL as a custom search engine, then set Quackly as your default.</p>
+        </div>
+        <div class="url-container">
+          <input type="text" class="url-input" readonly />
+          <button class="copy-button" title="Copy URL" aria-label="Copy setup URL">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
+              <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
+            </svg>
+          </button>
+        </div>
+        <p class="setup-note">
+          Works with Chrome, Helium, Firefox, and other browsers that support custom search engines.
+        </p>
+      </div>
+      <div id="setup-compact" class="setup-compact" hidden>
+        <span>Browser setup</span>
+        <button id="show-setup" class="setup-link" type="button">
+          Show instructions
         </button>
       </div>
+    </section>
+
+    <div class="settings-page-heading">
+      <h2>Settings</h2>
+      <p>Customize how Quackly searches, redirects, and handles each engine.</p>
     </div>
 
-    <div class="settings-section">
-      <h3>Settings</h3>
+    <div class="settings-grid">
+    <section class="settings-section settings-card">
+      <h3>Search</h3>
       <div class="setting-group">
         <label for="default-bang-input" class="setting-label">Default Bang</label>
         <input
@@ -202,35 +221,39 @@ function renderApp(): void {
         <button id="save-default-btn" class="save-button" title="Save Default Bang">Save</button>
       </div>
       <div class="current-note">
-        <br />
         Can be set to <span class="bang-highlight">!g</span> for Google, <span class="bang-highlight">!ddg</span> for DuckDuckGo, <span class="bang-highlight">!w</span> for Wikipedia, or any other bang.
       </div>
+    </section>
 
-      <div class="setting-group">
-        <input type="checkbox" id="multi-bang-checkbox" class="setting-checkbox" />
-        <label for="multi-bang-checkbox" class="setting-label-checkbox">
-          Enable Multi-Bang Search
+    <section class="settings-section settings-card">
+      <h3>Behavior</h3>
+      <div class="toggle-row">
+        <div class="toggle-copy">
+          <label class="toggle-title" for="multi-bang-checkbox">Multi-Bang Search</label>
+          <p class="toggle-description">
+            Open several services at once, like <span class="bang-highlight">cats !r !ddg !g</span>.
+          </p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="multi-bang-checkbox" class="setting-checkbox" aria-label="Enable Multi-Bang Search" />
+          <span class="switch-track" aria-hidden="true"></span>
         </label>
       </div>
-      <p class="setting-hint">
-        Allows you to search multiple sites at the same time by including multiple bangs. <br />
-        Ex: <span class="bang-highlight">"cats !r !ddg !g"</span> will open
-        Reddit, DuckDuckGo, and Google search results in separate tabs.
-      </p>
 
-      <div class="setting-group">
-        <input type="checkbox" id="question-bang-enabled" class="setting-checkbox" />
-        <label for="question-bang-enabled" class="setting-label-checkbox">
-          Use a trailing ? for a chosen bang
+      <div class="toggle-row">
+        <div class="toggle-copy">
+          <label class="toggle-title" for="question-bang-enabled">Trailing ? Shortcut</label>
+          <p class="toggle-description">
+            Send a question ending in <span class="bang-highlight">?</span> to
+            <span class="bang-highlight current-question-bang"></span>.
+          </p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="question-bang-enabled" class="setting-checkbox" aria-label="Enable trailing question mark shortcut" />
+          <span class="switch-track" aria-hidden="true"></span>
         </label>
       </div>
-      <p class="setting-hint">
-        When enabled, a query ending in <span class="bang-highlight">?</span>
-        with no explicit bang goes to
-        <span class="bang-highlight current-question-bang"></span>.
-        The question mark is removed from the search.
-      </p>
-      <div class="setting-group">
+      <div class="setting-group question-bang-settings" id="question-bang-settings" hidden>
         <label for="question-bang-input" class="setting-label">Question Bang</label>
         <input
           type="text"
@@ -242,58 +265,73 @@ function renderApp(): void {
         <button id="save-question-bang-btn" class="save-button" title="Save Question Bang">Save</button>
       </div>
 
-      <div class="setting-group">
-        <input type="checkbox" id="reddit-site-search-checkbox" class="setting-checkbox" />
-        <label for="reddit-site-search-checkbox" class="setting-label-checkbox">
-          Change !r to "site:reddit.com" search
+      <div class="toggle-row">
+        <div class="toggle-copy">
+          <label class="toggle-title" for="reddit-site-search-checkbox">Reddit Site Search</label>
+          <p class="toggle-description">
+            Turn <span class="bang-highlight">!r</span> into a default-engine search for <span class="bang-highlight">site:reddit.com</span>.
+          </p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="reddit-site-search-checkbox" class="setting-checkbox" aria-label="Use site:reddit.com for !r" />
+          <span class="switch-track" aria-hidden="true"></span>
         </label>
       </div>
-      <p class="setting-hint">
-        When enabled, searching with <span class="bang-highlight">!r</span> will
-        append <code style="font-size: 0.8em;">site:reddit.com</code> to your
-        query and use your default search engine, instead of redirecting
-        to Reddit directly.
-      </p>
+    </section>
 
-      <div class="setting-group bang-specific-setting-group ddg-specific">
-        <input type="checkbox" id="disable-ddg-ads" class="setting-checkbox" />
-        <label for="disable-ddg-ads" class="setting-label-checkbox">
-          Disable DuckDuckGo Search Ads
+    <section class="settings-section settings-card" id="ddg-settings-card">
+      <h3>DuckDuckGo</h3>
+      <div class="toggle-row bang-specific-setting-group ddg-specific">
+        <div class="toggle-copy">
+          <label class="toggle-title" for="disable-ddg-ads">Hide search ads</label>
+          <p class="toggle-description">Only applies while your default bang resolves to <span class="bang-highlight">!ddg</span>.</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="disable-ddg-ads" class="setting-checkbox" aria-label="Disable DuckDuckGo search ads" />
+          <span class="switch-track" aria-hidden="true"></span>
         </label>
       </div>
-      <p class="bang-specific-setting-hint ddg-specific">Only applies when default bang resolves to <span class="bang-highlight">!ddg</span>.</p>
 
-      <div class="setting-group bang-specific-setting-group ddg-specific">
-        <input type="checkbox" id="disable-ddg-promos" class="setting-checkbox" />
-        <label for="disable-ddg-promos" class="setting-label-checkbox">
-          Disable DuckDuckGo Promotions
+      <div class="toggle-row bang-specific-setting-group ddg-specific">
+        <div class="toggle-copy">
+          <label class="toggle-title" for="disable-ddg-promos">Hide promotions</label>
+          <p class="toggle-description">Removes extension reminders and other promotional content.</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="disable-ddg-promos" class="setting-checkbox" aria-label="Disable DuckDuckGo promotions" />
+          <span class="switch-track" aria-hidden="true"></span>
         </label>
       </div>
-      <p class="bang-specific-setting-hint ddg-specific">Hides reminders to install browser extensions and other content. Only applies when default bang resolves to <span class="bang-highlight">!ddg</span>.</p>
 
       <div class="setting-group bang-specific-setting-group ddg-specific">
-        <label for="duck-assist-select" class="setting-label-checkbox">
-          DuckDuckGo AI Overview
-        </label>
-        <select id="duck-assist-select" class="setting-input" style="width: auto; min-width: 150px;">
+        <div class="toggle-copy">
+          <span class="toggle-title">AI Overview</span>
+          <p class="toggle-description">How often DuckDuckGo's AI-generated summary appears.</p>
+        </div>
+        <select id="duck-assist-select" class="setting-input compact-select">
           <option value="0">Never</option>
           <option value="1">On-Demand</option>
           <option value="2">Sometimes (Default)</option>
           <option value="3">Often</option>
         </select>
       </div>
-      <p class="bang-specific-setting-hint ddg-specific">How often DuckDuckGo's AI Overview appears. Only applies when default bang resolves to <span class="bang-highlight">!ddg</span>.</p>
+    </section>
 
-      <div class="setting-group bang-specific-setting-group g-specific">
-        <input type="checkbox" id="disable-google-ai-overview" class="setting-checkbox" />
-        <label for="disable-google-ai-overview" class="setting-label-checkbox">
-          Disable Google AI Overview
+    <section class="settings-section settings-card">
+      <h3>Google</h3>
+      <div class="toggle-row bang-specific-setting-group g-specific">
+        <div class="toggle-copy">
+          <label class="toggle-title" for="disable-google-ai-overview">Hide AI Overview</label>
+          <p class="toggle-description">Appends <code>-ai</code> to any Google search, including explicit <span class="bang-highlight">!g</span> searches.</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="disable-google-ai-overview" class="setting-checkbox" aria-label="Disable Google AI Overview" />
+          <span class="switch-track" aria-hidden="true"></span>
         </label>
       </div>
-      <p class="bang-specific-setting-hint g-specific">Appends <code style="font-size: 0.8em;">-ai</code> to any Google search, including explicit <span class="bang-highlight">!g</span> searches.</p>
-    </div>
+    </section>
 
-    <div class="settings-section">
+    <section class="settings-section settings-card settings-card-wide">
       <h3>Your Custom Bangs</h3>
       <p class="setting-subtitle">
         Add your own custom bangs here. Bangs are best if they are short and memorable.
@@ -306,8 +344,10 @@ function renderApp(): void {
         <input id="new-url-input" placeholder="https://chatgpt.com/?q=%s" class="setting-input" />
         <button id="add-custom-bang-button" class="save-button">Add</button>
       </div>
+    </section>
     </div>
   </div>
+</div>
 
   <footer class="footer">
     Fully open source on <a href="https://github.com/elliothco/quackly" target="_blank" rel="noopener noreferrer">GitHub</a>.
@@ -327,6 +367,12 @@ function renderApp(): void {
   const searchButton = $<HTMLButtonElement>(".search-button");
   const searchSuggestions = $<HTMLDivElement>("#search-suggestions");
   const currentDefaultHint = $<HTMLSpanElement>(".current-default-hint");
+  const setupCallout = $<HTMLElement>("#setup");
+  const setupExpanded = $<HTMLDivElement>(".setup-expanded");
+  const setupCompact = $<HTMLDivElement>("#setup-compact");
+  const setupTitle = $<HTMLHeadingElement>("#setup-title");
+  const dismissSetupButton = $<HTMLButtonElement>("#dismiss-setup");
+  const showSetupButton = $<HTMLButtonElement>("#show-setup");
   const urlInput = $<HTMLInputElement>(".url-input");
   const copyButton = $<HTMLButtonElement>(".copy-button");
   const defaultBangInput = $<HTMLInputElement>("#default-bang-input");
@@ -340,6 +386,7 @@ function renderApp(): void {
     "#question-bang-enabled",
   );
   const questionBangInput = $<HTMLInputElement>("#question-bang-input");
+  const questionBangSettings = $<HTMLDivElement>("#question-bang-settings");
   const saveQuestionBangButton = $<HTMLButtonElement>(
     "#save-question-bang-btn",
   );
@@ -360,6 +407,29 @@ function renderApp(): void {
 
   if (urlInput) urlInput.value = `${BASE_URL}?q=%s`;
 
+  function setSetupCollapsed(collapsed: boolean, moveFocus = false): void {
+    if (!setupExpanded || !setupCompact) return;
+    setupExpanded.hidden = collapsed;
+    setupCompact.hidden = !collapsed;
+    setupCallout?.classList.toggle("is-collapsed", collapsed);
+    storage.setItem("setup-collapsed", String(collapsed));
+
+    if (moveFocus) {
+      requestAnimationFrame(() => {
+        if (collapsed) showSetupButton?.focus();
+        else setupTitle?.focus();
+      });
+    }
+  }
+
+  dismissSetupButton?.addEventListener("click", () => {
+    setSetupCollapsed(true, true);
+  });
+  showSetupButton?.addEventListener("click", () => {
+    setSetupCollapsed(false, true);
+  });
+  setSetupCollapsed(storage.getItem("setup-collapsed") === "true");
+
   function showDefault(): void {
     if (defaultBangInput) defaultBangInput.value = `!${settings.defaultBang}`;
     if (currentDefaultHint) {
@@ -376,6 +446,9 @@ function renderApp(): void {
     }
     if (currentQuestionBang) {
       currentQuestionBang.textContent = `!${settings.questionBang}`;
+    }
+    if (questionBangSettings) {
+      questionBangSettings.hidden = !settings.questionBangEnabled;
     }
   }
 
@@ -598,7 +671,6 @@ function renderApp(): void {
     setTimeout(hideSuggestions, 100);
   });
   searchButton?.addEventListener("click", doSearch);
-
   copyButton?.addEventListener("click", async () => {
     if (!urlInput) return;
     try {
@@ -632,6 +704,7 @@ function renderApp(): void {
   const googleHints = $all<HTMLElement>(
     ".bang-specific-setting-hint.g-specific",
   );
+  const ddgSettingsCard = $<HTMLElement>("#ddg-settings-card");
 
   async function refreshSpecificSettings(): Promise<void> {
     if (
@@ -648,6 +721,7 @@ function renderApp(): void {
         [...ddgHints],
         [...googleGroups],
         [...googleHints],
+        ddgSettingsCard,
         {
           ads: disableDdgAdsCheckbox,
           promos: disableDdgPromosCheckbox,
@@ -688,6 +762,7 @@ function renderApp(): void {
       const checked = (event.target as HTMLInputElement).checked;
       settings = { ...settings, questionBangEnabled: checked };
       writeSetting(storage, "questionBangEnabled", checked);
+      showQuestionBang();
       showToast(
         `Trailing ? shortcut: ${checked ? "enabled" : "disabled"}`,
       );

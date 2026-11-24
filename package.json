@@ -10,8 +10,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "bun test",
-    "sync:bangs": "bun scripts/sync-kagi-bangs.ts",
-    "update:bangs": "bun scripts/sync-kagi-bangs.ts --latest"
+    "sync:bangs": "bun scripts/sync-helium-bangs.ts",
+    "update:bangs": "bun scripts/sync-helium-bangs.ts"
   },
   "devDependencies": {
     "typescript": "~5.7.3",

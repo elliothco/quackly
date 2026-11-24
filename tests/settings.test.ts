@@ -33,12 +33,28 @@ describe("settings", () => {
     expect(settings.questionBang).toBe("ddg-ai");
     expect(settings.questionBangEnabled).toBe(false);
     expect(settings.ddgAiQuickAnswers).toBe(true);
+    expect(settings.searchTypesEnabled).toBe(true);
+    expect(settings.imagesBang).toBe("");
+    expect(settings.videosBang).toBe("");
+    expect(settings.newsBang).toBe("");
   });
 
   test("normalizes saved default bangs", () => {
     const storage = new MemoryStorage();
     storage.setItem("default-bang", "!GOOGLE");
     expect(loadSettings(storage).defaultBang).toBe("google");
+  });
+
+  test("normalizes saved search-type bangs and ignores invalid values", () => {
+    const storage = new MemoryStorage();
+    storage.setItem("images-bang", "!Custom.Images");
+    storage.setItem("videos-bang", "has space");
+    storage.setItem("news-bang", "!News");
+
+    const settings = loadSettings(storage);
+    expect(settings.imagesBang).toBe("custom.images");
+    expect(settings.videosBang).toBe("");
+    expect(settings.newsBang).toBe("news");
   });
 
   test("drops malformed custom bang data", () => {

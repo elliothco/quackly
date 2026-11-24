@@ -51,6 +51,10 @@ export interface Settings {
   questionBang: string;
   questionBangEnabled: boolean;
   ddgAiQuickAnswers: boolean;
+  searchTypesEnabled: boolean;
+  imagesBang: string;
+  videosBang: string;
+  newsBang: string;
 }
 
 export type Route =

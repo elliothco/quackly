@@ -16,6 +16,10 @@ const baseSettings: Settings = {
   questionBang: "ddg-ai",
   questionBangEnabled: true,
   ddgAiQuickAnswers: true,
+  searchTypesEnabled: true,
+  imagesBang: "",
+  videosBang: "",
+  newsBang: "",
 };
 
 function makeCatalog(customBangs: CustomBang[] = []): BangCatalog {

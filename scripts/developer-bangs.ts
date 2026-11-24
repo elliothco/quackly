@@ -34,4 +34,28 @@ export const developerBangs: readonly DeveloperBang[] = [
       "url_encode_space_to_plus",
     ],
   },
+  {
+    trigger: "kagi-images",
+    url: "https://kagi.com/images?q={searchTerms}",
+  },
+  {
+    trigger: "kagi-videos",
+    url: "https://kagi.com/videos?q={searchTerms}",
+  },
+  {
+    trigger: "kagi-news",
+    url: "https://kagi.com/news?q={searchTerms}",
+  },
+  {
+    trigger: "brave-images",
+    url: "https://search.brave.com/images?q={searchTerms}",
+  },
+  {
+    trigger: "brave-videos",
+    url: "https://search.brave.com/videos?q={searchTerms}",
+  },
+  {
+    trigger: "brave-news",
+    url: "https://search.brave.com/news?q={searchTerms}",
+  },
 ];

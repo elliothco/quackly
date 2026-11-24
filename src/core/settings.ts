@@ -13,6 +13,10 @@ export const LS_KEYS = {
   questionBang: "question-bang",
   questionBangEnabled: "question-bang-enabled",
   ddgAiQuickAnswers: "ddg-ai-quick-answers",
+  searchTypesEnabled: "search-types-enabled",
+  imagesBang: "images-bang",
+  videosBang: "videos-bang",
+  newsBang: "news-bang",
 } as const;
 
 export const FALLBACK_BANG = "ddg";
@@ -29,6 +33,10 @@ export const SETTINGS_DEFAULTS = {
   questionBang: DEFAULT_QUESTION_BANG,
   questionBangEnabled: false,
   ddgAiQuickAnswers: true,
+  searchTypesEnabled: true,
+  imagesBang: "",
+  videosBang: "",
+  newsBang: "",
 } as const;
 
 export function createDefaultSettings(): Settings {
@@ -59,6 +67,15 @@ function getBoolWithDefault(
   const value = storage.getItem(key);
   if (value === null) return fallback;
   return value === "true";
+}
+
+function getTriggerWithDefault(
+  storage: StorageLike,
+  key: string,
+  fallback: string,
+): string {
+  const trigger = normalizeTrigger(getStr(storage, key, fallback));
+  return isValidTrigger(trigger) ? trigger : fallback;
 }
 
 function deriveDomain(template: string): string {
@@ -175,6 +192,26 @@ export function loadSettings(storage: StorageLike): Settings {
       storage,
       LS_KEYS.ddgAiQuickAnswers,
       SETTINGS_DEFAULTS.ddgAiQuickAnswers,
+    ),
+    searchTypesEnabled: getBoolWithDefault(
+      storage,
+      LS_KEYS.searchTypesEnabled,
+      SETTINGS_DEFAULTS.searchTypesEnabled,
+    ),
+    imagesBang: getTriggerWithDefault(
+      storage,
+      LS_KEYS.imagesBang,
+      SETTINGS_DEFAULTS.imagesBang,
+    ),
+    videosBang: getTriggerWithDefault(
+      storage,
+      LS_KEYS.videosBang,
+      SETTINGS_DEFAULTS.videosBang,
+    ),
+    newsBang: getTriggerWithDefault(
+      storage,
+      LS_KEYS.newsBang,
+      SETTINGS_DEFAULTS.newsBang,
     ),
   };
 }

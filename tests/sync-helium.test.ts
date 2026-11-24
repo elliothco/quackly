@@ -43,6 +43,12 @@ describe("Helium sync transforms", () => {
       "hn",
       "ddg-ai",
       "ddg-chat",
+      "kagi-images",
+      "kagi-videos",
+      "kagi-news",
+      "brave-images",
+      "brave-videos",
+      "brave-news",
     ]);
     expect(records[0].canonical).toBe("g");
     expect(records[0].domain).toBe("www.google.com");

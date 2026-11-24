@@ -7,6 +7,7 @@ import {
   FORMAT_URL_ENCODE,
 } from "./bang-index";
 import { parseBangQuery } from "./parse";
+import { resolveTypeTrigger } from "./search-types";
 import { normalizeTrigger } from "./trigger";
 import type {
   BangLookup,
@@ -105,9 +106,6 @@ function appendDdgSettings(url: string, settings: Settings): string {
       parsed.searchParams.set("kaq", "-1");
       parsed.searchParams.set("kap", "-1");
     }
-    if (settings.duckAssist !== "2") {
-      parsed.searchParams.set("kbe", settings.duckAssist);
-    }
     return parsed.href;
   } catch {
     return url;
@@ -180,6 +178,15 @@ async function getDefaultRecord(
   return catalog.lookupWithFull("g");
 }
 
+async function lookupTriggerRecord(
+  trigger: string,
+  settings: Settings,
+  catalog: BangLookup,
+): Promise<BangRecord | undefined> {
+  const mapped = resolveTypeTrigger(trigger, settings);
+  return catalog.lookupWithFull(mapped?.target ?? trigger);
+}
+
 function fallbackUrl(query: string): string {
   return `${FALLBACK_URL}${encodeURIComponent(query)}`;
 }
@@ -228,7 +235,7 @@ export async function resolveRoute(
   const resolved: { trigger: string; record: BangRecord }[] = [];
 
   for (const trigger of parsed.candidates) {
-    const record = await catalog.lookupWithFull(trigger);
+    const record = await lookupTriggerRecord(trigger, settings, catalog);
     if (record) {
       resolved.push({ trigger, record });
     } else {
@@ -291,7 +298,7 @@ export async function resolveMultiBangs(
 
   for (const rawTrigger of triggers) {
     const trigger = normalizeTrigger(rawTrigger);
-    const record = await catalog.lookupWithFull(trigger);
+    const record = await lookupTriggerRecord(trigger, settings, catalog);
     if (!record) {
       unresolved.push(trigger);
       continue;

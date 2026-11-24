@@ -46,6 +46,37 @@ describe("generated Helium data", () => {
     expect(full.get("ddg-chat")?.[1]).toBe("ddg-ai");
   });
 
+  test("contains every built-in search type provider target", () => {
+    for (const trigger of [
+      "gi",
+      "gv",
+      "gn",
+      "ddgi",
+      "ddgv",
+      "ddgn",
+      "spi",
+      "spv",
+      "startpage-news",
+      "kagi-images",
+      "kagi-videos",
+      "kagi-news",
+      "brave-images",
+      "brave-videos",
+      "brave-news",
+      "bi",
+      "bv",
+      "bnews",
+      "ei",
+      "qwi",
+      "qwv",
+      "qwn",
+      "mojeek-images",
+    ]) {
+      expect(full.has(trigger)).toBe(true);
+      expect(hot.has(trigger)).toBe(true);
+    }
+  });
+
   test("keeps the hot subset small and includes the common triggers", () => {
     expect(hot.size).toBe(BANG_DATA_META.hotTriggers);
     expect(hot.size).toBeLessThan(full.size);

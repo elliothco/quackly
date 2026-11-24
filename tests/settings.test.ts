@@ -27,13 +27,12 @@ describe("settings", () => {
     expect(settings.redditSiteSearch).toBe(true);
     expect(settings.disableDdgAds).toBe(true);
     expect(settings.disableDdgPromos).toBe(true);
-    expect(settings.duckAssist).toBe("2");
     expect(settings.disableGoogleAi).toBe(false);
     expect(settings.customBangs).toEqual([]);
     expect(settings.questionBang).toBe("ddg-ai");
     expect(settings.questionBangEnabled).toBe(false);
     expect(settings.ddgAiQuickAnswers).toBe(true);
-    expect(settings.searchTypesEnabled).toBe(true);
+    expect(settings.searchTypesEnabled).toBe(false);
     expect(settings.imagesBang).toBe("");
     expect(settings.videosBang).toBe("");
     expect(settings.newsBang).toBe("");

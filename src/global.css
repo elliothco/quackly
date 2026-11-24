@@ -96,6 +96,18 @@ textarea {
     display: none !important;
 }
 
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    padding: 0;
+    border: 0;
+    margin: -1px;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+}
+
 .app-shell {
     display: flex;
     min-height: 100vh;
@@ -667,6 +679,90 @@ kbd {
     font-size: 0.78rem;
 }
 
+.default-custom-bang-settings .setting-group {
+    margin-top: 0.7rem;
+}
+
+.search-type-settings {
+    margin-top: 0.8rem;
+    padding-top: 0.4rem;
+    border-top: 1px solid var(--border);
+}
+
+.search-type-intro {
+    padding: 0.75rem 0 0.35rem;
+    color: var(--text-subtle);
+    font-size: 0.76rem;
+    line-height: 1.45;
+}
+
+.search-type-row {
+    padding: 0.85rem 0;
+    border-top: 1px solid var(--border);
+}
+
+.search-type-row:first-of-type {
+    border-top: 0;
+}
+
+.search-type-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.search-type-name {
+    color: var(--text-primary);
+    font-size: 0.84rem;
+    font-weight: 650;
+}
+
+.search-type-aliases {
+    color: var(--text-subtle);
+    font-family:
+        "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas,
+        "Courier New", monospace;
+    font-size: 0.68rem;
+    overflow-wrap: anywhere;
+    text-align: right;
+}
+
+.search-type-controls {
+    display: grid;
+    grid-template-columns: minmax(10rem, 0.9fr) minmax(10rem, 1.1fr);
+    gap: 0.5rem;
+    margin-top: 0.55rem;
+}
+
+.search-type-controls:not(.has-custom-bang) {
+    grid-template-columns: 1fr;
+}
+
+.search-type-controls .setting-input {
+    width: 100%;
+}
+
+.search-type-bang {
+    font-family:
+        "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas,
+        "Courier New", monospace;
+    font-size: 0.8rem;
+}
+
+.search-type-bang:disabled {
+    color: var(--text-secondary);
+    background: var(--surface-muted);
+    opacity: 1;
+}
+
+.search-type-hint {
+    margin-top: 0.4rem;
+    color: var(--text-subtle);
+    font-size: 0.72rem;
+    line-height: 1.4;
+}
+
 .setting-hint,
 .bang-specific-setting-hint {
     margin-top: 0.4rem;
@@ -678,11 +774,6 @@ kbd {
 
 .bang-specific-setting-group {
     display: none;
-}
-
-.compact-select {
-    width: 11rem;
-    flex: 0 0 auto;
 }
 
 .question-bang-settings {
@@ -1024,6 +1115,10 @@ kbd {
     }
 
     #add-custom-bang-form {
+        grid-template-columns: 1fr;
+    }
+
+    .search-type-controls {
         grid-template-columns: 1fr;
     }
 

@@ -5,6 +5,7 @@ import {
   configuredTypeProvider,
   providerForBang,
   resolveTypeTrigger,
+  SEARCH_PROVIDERS,
 } from "../src/core/search-types";
 import type { Settings } from "../src/core/types";
 
@@ -12,7 +13,6 @@ const baseSettings: Settings = {
   defaultBang: "ddg",
   disableDdgAds: true,
   disableDdgPromos: true,
-  duckAssist: "2",
   disableGoogleAi: false,
   customBangs: [],
   redditSiteSearch: true,
@@ -37,15 +37,35 @@ describe("search type providers", () => {
     expect(providerForBang("ecosia")).toBe("ecosia");
     expect(providerForBang("qwant")).toBe("qwant");
     expect(providerForBang("mojeek")).toBe("mojeek");
+    expect(providerForBang("yt")).toBe("youtube");
+  });
+
+  test("provides default-bang options for general search engines", () => {
+    expect(
+      SEARCH_PROVIDERS.filter((provider) => provider.defaultBang).map(
+        (provider) => provider.defaultBang,
+      ),
+    ).toEqual([
+      "g",
+      "ddg",
+      "startpage",
+      "kagi",
+      "brave",
+      "bing",
+      "ecosia",
+      "qwant",
+      "mojeek",
+    ]);
   });
 
   test("uses a type bang from the default provider", () => {
     expect(autoTypeBang("images", "g")).toBe("gi");
     expect(autoTypeBang("videos", "ddg")).toBe("ddgv");
-    expect(autoTypeBang("news", "startpage")).toBeNull();
+    expect(autoTypeBang("news", "startpage")).toBe("startpage-news");
     expect(autoTypeBang("news", "bing")).toBe("bnews");
     expect(autoTypeBang("images", "qwant")).toBe("qwi");
-    expect(autoTypeBang("images", "mojeek")).toBeNull();
+    expect(autoTypeBang("images", "mojeek")).toBe("mojeek-images");
+    expect(autoTypeBang("videos", "yt")).toBe("yt");
   });
 
   test("uses configured bangs before the default provider", () => {

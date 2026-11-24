@@ -5,7 +5,6 @@ export const LS_KEYS = {
   defaultBang: "default-bang",
   disableDdgAds: "disable-ddg-ads",
   disableDdgPromos: "disable-ddg-promos",
-  duckAssist: "duck-assist-setting",
   disableGoogleAi: "disable-google-ai-overview",
   customBangs: "custom-bangs",
   redditSiteSearch: "reddit-site-search-enabled",
@@ -26,14 +25,13 @@ export const SETTINGS_DEFAULTS = {
   defaultBang: FALLBACK_BANG,
   disableDdgAds: true,
   disableDdgPromos: true,
-  duckAssist: "2",
   disableGoogleAi: false,
   redditSiteSearch: true,
   multiBangEnabled: true,
   questionBang: DEFAULT_QUESTION_BANG,
   questionBangEnabled: false,
   ddgAiQuickAnswers: true,
-  searchTypesEnabled: true,
+  searchTypesEnabled: false,
   imagesBang: "",
   videosBang: "",
   newsBang: "",
@@ -137,11 +135,6 @@ export function parseCustomBangs(raw: string): CustomBang[] {
 }
 
 export function loadSettings(storage: StorageLike): Settings {
-  const duckAssist = getStr(
-    storage,
-    LS_KEYS.duckAssist,
-    SETTINGS_DEFAULTS.duckAssist,
-  );
   const storedQuestionBang = normalizeTrigger(
     getStr(storage, LS_KEYS.questionBang, DEFAULT_QUESTION_BANG),
   );
@@ -163,7 +156,6 @@ export function loadSettings(storage: StorageLike): Settings {
       LS_KEYS.disableDdgPromos,
       SETTINGS_DEFAULTS.disableDdgPromos,
     ),
-    duckAssist: ["0", "1", "2", "3"].includes(duckAssist) ? duckAssist : "2",
     disableGoogleAi: getBoolWithDefault(
       storage,
       LS_KEYS.disableGoogleAi,

@@ -25,7 +25,37 @@ const ALL_FORMAT_FLAGS =
   FORMAT_URL_ENCODE_PLACEHOLDER |
   FORMAT_URL_ENCODE_SPACE_TO_PLUS;
 
-const ALWAYS_HOT = ["g", "ddg", "r", "yt", "w", "chatgpt"];
+const ALWAYS_HOT = [
+  "g",
+  "ddg",
+  "r",
+  "yt",
+  "w",
+  "chatgpt",
+  "gi",
+  "gv",
+  "gn",
+  "ddgi",
+  "ddgv",
+  "ddgn",
+  "spi",
+  "spv",
+  "startpage-news",
+  "kagi-images",
+  "kagi-videos",
+  "kagi-news",
+  "brave-images",
+  "brave-videos",
+  "brave-news",
+  "bi",
+  "bv",
+  "bnews",
+  "ei",
+  "qwi",
+  "qwv",
+  "qwn",
+  "mojeek-images",
+];
 
 interface HeliumBang {
   s: string;

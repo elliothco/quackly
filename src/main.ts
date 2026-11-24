@@ -3,6 +3,19 @@ import { createAppCatalog, hotBangs } from "./core/app-catalog";
 import { buildMultiBangUrl } from "./core/navigation";
 import { resolveRoute } from "./core/resolve";
 import {
+  SEARCH_PROVIDERS,
+  SEARCH_TYPE_ALIASES,
+  SEARCH_TYPE_LABELS,
+  TYPE_SETTING_KEYS,
+  configuredTypeBang,
+  configuredTypeProvider,
+  providerBang,
+  providerForBang,
+  providerForType,
+  type ProviderId,
+  type SearchType,
+} from "./core/search-types";
+import {
   DEFAULT_QUESTION_BANG,
   FALLBACK_BANG,
   LS_KEYS,
@@ -19,6 +32,66 @@ const storage = window.localStorage;
 let settings: Settings = loadSettings(storage);
 const catalog = createAppCatalog(settings.customBangs);
 const BASE_URL = window.location.origin + window.location.pathname;
+const SEARCH_TYPES: readonly SearchType[] = ["images", "videos", "news"];
+
+interface SearchTypeControl {
+  type: SearchType;
+  provider: HTMLSelectElement | null;
+  bang: HTMLInputElement | null;
+  hint: HTMLParagraphElement | null;
+}
+
+function renderSearchTypeRows(): string {
+  return SEARCH_TYPES.map((type) => {
+    const label = SEARCH_TYPE_LABELS[type];
+    const providerOptions = SEARCH_PROVIDERS.map((provider) => {
+      const bang = provider.bangs[type];
+      const suffix = bang ? ` (!${bang})` : " (not available)";
+      return `<option value="${provider.id}"${bang ? "" : " disabled"}>${provider.name}${suffix}</option>`;
+    }).join("");
+    const aliases = SEARCH_TYPE_ALIASES[type]
+      .slice(0, 5)
+      .map((alias) => `!${alias}`)
+      .join(" ");
+
+    return `
+      <div class="search-type-row" data-search-type="${type}">
+        <div class="search-type-heading">
+          <span class="search-type-name">${label}</span>
+          <span class="search-type-aliases" title="${SEARCH_TYPE_ALIASES[type]
+            .map((alias) => `!${alias}`)
+            .join(", ")}">${aliases}</span>
+        </div>
+        <div class="search-type-controls">
+          <label class="sr-only" for="${type}-provider">${label} provider</label>
+          <select id="${type}-provider" class="setting-input search-type-provider">
+            <option value="auto">Auto — follow default</option>
+            ${providerOptions}
+            <option value="custom">Custom bang</option>
+          </select>
+          <label class="sr-only" for="${type}-bang-input">${label} target bang</label>
+          <input
+            id="${type}-bang-input"
+            class="setting-input search-type-bang"
+            type="text"
+            list="bang-suggestions"
+            placeholder="Auto"
+          />
+        </div>
+        <p class="search-type-hint" id="${type}-bang-hint"></p>
+      </div>
+    `;
+  }).join("");
+}
+
+function renderDefaultProviderOptions(): string {
+  return SEARCH_PROVIDERS.filter((provider) => provider.defaultBang)
+    .map(
+      (provider) =>
+        `<option value="${provider.id}">${provider.name} (!${provider.defaultBang})</option>`,
+    )
+    .join("");
+}
 
 function showToast(message: string): void {
   const toast = document.createElement("div");
@@ -49,16 +122,13 @@ async function updateBangSpecificSettings(
   controls: {
     ads: HTMLInputElement;
     promos: HTMLInputElement;
-    assist: HTMLSelectElement;
     googleAi: HTMLInputElement;
   },
 ): Promise<void> {
   controls.ads.disabled = false;
   controls.promos.disabled = false;
-  controls.assist.disabled = false;
   controls.ads.checked = settings.disableDdgAds;
   controls.promos.checked = settings.disableDdgPromos;
-  controls.assist.value = settings.duckAssist;
   controls.googleAi.disabled = false;
   controls.googleAi.checked = settings.disableGoogleAi;
 }
@@ -187,19 +257,54 @@ function renderApp(): void {
     <section class="settings-section settings-card">
       <h3>Search</h3>
       <div class="setting-group">
-        <label for="default-bang-input" class="setting-label">Default Bang</label>
-        <input
-          type="text"
-          id="default-bang-input"
-          class="setting-input"
-          list="bang-suggestions"
-          placeholder="!bang"
-        />
-        <datalist id="bang-suggestions"></datalist>
-        <button id="save-default-btn" class="save-button" title="Save Default Bang">Save</button>
+        <label for="default-provider-select" class="setting-label">Default Search</label>
+        <select id="default-provider-select" class="setting-input">
+          ${renderDefaultProviderOptions()}
+          <option value="custom">Custom bang</option>
+        </select>
       </div>
+      <div id="default-custom-bang-settings" class="default-custom-bang-settings" hidden>
+        <div class="setting-group">
+          <label for="default-bang-input" class="setting-label">Custom Bang</label>
+          <input
+            type="text"
+            id="default-bang-input"
+            class="setting-input"
+            list="bang-suggestions"
+            placeholder="!bang"
+          />
+          <button id="save-default-btn" class="save-button" title="Save Default Bang">Save</button>
+        </div>
+      </div>
+        <datalist id="bang-suggestions"></datalist>
       <div class="current-note">
-        Can be set to <span class="bang-highlight">!g</span> for Google, <span class="bang-highlight">!ddg</span> for DuckDuckGo, <span class="bang-highlight">!w</span> for Wikipedia, or any other bang.
+        Choose a major provider, or use Custom to enter any bang such as
+        <span class="bang-highlight">!w</span> for Wikipedia.
+      </div>
+
+      <div class="toggle-row">
+        <div class="toggle-copy">
+          <label class="toggle-title" for="search-types-enabled">Separate search types</label>
+          <p class="toggle-description">
+            Route <span class="bang-highlight">!i</span>,
+            <span class="bang-highlight">!v</span>, and
+            <span class="bang-highlight">!n</span> to image, video, and news
+            results. Choose a provider or custom bang for each.
+          </p>
+        </div>
+        <div class="toggle-actions">
+          <label class="switch">
+            <input type="checkbox" id="search-types-enabled" class="setting-checkbox" aria-label="Configure search types separately" />
+            <span class="switch-track" aria-hidden="true"></span>
+          </label>
+        </div>
+      </div>
+      <div id="search-types-settings" class="search-type-settings">
+        <p class="search-type-intro">
+          Auto follows your default search provider. Provider rows show the
+          bang they use; choose Custom to enter a different target.
+        </p>
+        ${renderSearchTypeRows()}
       </div>
     </section>
 
@@ -251,21 +356,6 @@ function renderApp(): void {
 
       <div class="toggle-row">
         <div class="toggle-copy">
-          <label class="toggle-title" for="ddg-ai-quick-answers">DuckDuckGo AI quick answers</label>
-          <p class="toggle-description">
-            Start answering immediately with <span class="bang-highlight">!ddg-ai</span> or <span class="bang-highlight">!ddg-chat</span>. Turn off to open the chat with the prompt filled instead.
-          </p>
-        </div>
-        <div class="toggle-actions">
-          <label class="switch">
-            <input type="checkbox" id="ddg-ai-quick-answers" class="setting-checkbox" aria-label="Start DuckDuckGo AI answers immediately" />
-            <span class="switch-track" aria-hidden="true"></span>
-          </label>
-        </div>
-      </div>
-
-      <div class="toggle-row">
-        <div class="toggle-copy">
           <label class="toggle-title" for="reddit-site-search-checkbox">Reddit Site Search</label>
           <p class="toggle-description">
             Turn <span class="bang-highlight">!r</span> into a default-engine search for <span class="bang-highlight">site:reddit.com</span>.
@@ -308,17 +398,19 @@ function renderApp(): void {
         </div>
       </div>
 
-      <div class="setting-group bang-specific-setting-group ddg-specific">
+      <div class="toggle-row bang-specific-setting-group ddg-specific">
         <div class="toggle-copy">
-          <span class="toggle-title">AI Overview</span>
-          <p class="toggle-description">How often DuckDuckGo's AI-generated summary appears.</p>
+          <label class="toggle-title" for="ddg-ai-quick-answers">AI quick answers</label>
+          <p class="toggle-description">
+            Start answering immediately with <span class="bang-highlight">!ddg-ai</span> or <span class="bang-highlight">!ddg-chat</span>. Turn off to open the chat with the prompt filled instead.
+          </p>
         </div>
-        <select id="duck-assist-select" class="setting-input compact-select">
-          <option value="0">Never</option>
-          <option value="1">On-Demand</option>
-          <option value="2">Sometimes (Default)</option>
-          <option value="3">Often</option>
-        </select>
+        <div class="toggle-actions">
+          <label class="switch">
+            <input type="checkbox" id="ddg-ai-quick-answers" class="setting-checkbox" aria-label="Start DuckDuckGo AI answers immediately" />
+            <span class="switch-track" aria-hidden="true"></span>
+          </label>
+        </div>
       </div>
     </section>
 
@@ -361,6 +453,10 @@ function renderApp(): void {
             <h4>Individual settings</h4>
             <div class="reset-buttons">
               <button type="button" data-reset-setting="defaultBang">Default bang</button>
+              <button type="button" data-reset-setting="searchTypesEnabled">Search type shortcuts</button>
+              <button type="button" data-reset-setting="imagesBang">Images bang</button>
+              <button type="button" data-reset-setting="videosBang">Videos bang</button>
+              <button type="button" data-reset-setting="newsBang">News bang</button>
               <button type="button" data-reset-setting="multiBangEnabled">Multi-Bang Search</button>
               <button type="button" data-reset-setting="questionBangEnabled">Trailing ? shortcut</button>
               <button type="button" data-reset-setting="questionBang">Question bang</button>
@@ -368,7 +464,6 @@ function renderApp(): void {
               <button type="button" data-reset-setting="redditSiteSearch">Reddit site search</button>
               <button type="button" data-reset-setting="disableDdgAds">DuckDuckGo ads</button>
               <button type="button" data-reset-setting="disableDdgPromos">DuckDuckGo promotions</button>
-              <button type="button" data-reset-setting="duckAssist">DuckDuckGo AI Overview</button>
               <button type="button" data-reset-setting="disableGoogleAi">Google AI Overview</button>
             </div>
           </div>
@@ -415,6 +510,12 @@ function renderApp(): void {
   const showSetupButton = $<HTMLButtonElement>("#show-setup");
   const urlInput = $<HTMLInputElement>(".url-input");
   const copyButton = $<HTMLButtonElement>(".copy-button");
+  const defaultProviderSelect = $<HTMLSelectElement>(
+    "#default-provider-select",
+  );
+  const defaultCustomBangSettings = $<HTMLDivElement>(
+    "#default-custom-bang-settings",
+  );
   const defaultBangInput = $<HTMLInputElement>("#default-bang-input");
   const saveDefaultBtn = $<HTMLButtonElement>("#save-default-btn");
   const suggestions = $<HTMLDataListElement>("#bang-suggestions");
@@ -440,13 +541,24 @@ function renderApp(): void {
   );
   const disableDdgAdsCheckbox = $<HTMLInputElement>("#disable-ddg-ads");
   const disableDdgPromosCheckbox = $<HTMLInputElement>("#disable-ddg-promos");
-  const duckAssistSelect = $<HTMLSelectElement>("#duck-assist-select");
   const disableGoogleAiOverviewCheckbox = $<HTMLInputElement>(
     "#disable-google-ai-overview",
   );
   const ddgAiQuickAnswersCheckbox = $<HTMLInputElement>(
     "#ddg-ai-quick-answers",
   );
+  const searchTypesEnabledCheckbox = $<HTMLInputElement>(
+    "#search-types-enabled",
+  );
+  const searchTypesSettings = $<HTMLDivElement>("#search-types-settings");
+  const searchTypeControls: SearchTypeControl[] = SEARCH_TYPES.map((type) => ({
+    type,
+    provider: $<HTMLSelectElement>(`#${type}-provider`),
+    bang: $<HTMLInputElement>(`#${type}-bang-input`),
+    hint: $<HTMLParagraphElement>(`#${type}-bang-hint`),
+  }));
+  const customSearchTypeModes = new Set<SearchType>();
+  let defaultCustomMode = false;
 
   if (urlInput) urlInput.value = `${BASE_URL}?q=%s`;
 
@@ -474,7 +586,21 @@ function renderApp(): void {
   setSetupCollapsed(storage.getItem("setup-collapsed") === "true");
 
   function showDefault(): void {
-    if (defaultBangInput) defaultBangInput.value = `!${settings.defaultBang}`;
+    const providerId = providerForBang(settings.defaultBang);
+    const provider = SEARCH_PROVIDERS.find(
+      (item) => item.id === providerId && item.defaultBang,
+    );
+    const custom = defaultCustomMode || !provider;
+
+    if (defaultProviderSelect) {
+      defaultProviderSelect.value = custom ? "custom" : (provider?.id ?? "custom");
+    }
+    if (defaultCustomBangSettings) {
+      defaultCustomBangSettings.hidden = !custom;
+    }
+    if (defaultBangInput) {
+      defaultBangInput.value = custom ? `!${settings.defaultBang}` : "";
+    }
     if (currentDefaultHint) {
       currentDefaultHint.textContent = `!${settings.defaultBang}`;
     }
@@ -493,6 +619,128 @@ function renderApp(): void {
     if (questionBangSettings) {
       questionBangSettings.hidden = !settings.questionBangEnabled;
     }
+  }
+
+  function writeSearchTypeBang(type: SearchType, bang: string): void {
+    const key = TYPE_SETTING_KEYS[type];
+    settings = { ...settings, [key]: bang } as Settings;
+    writeSetting(storage, key, bang);
+  }
+
+  function clearSearchTypeBangsUsing(removed: ReadonlySet<string>): void {
+    for (const type of SEARCH_TYPES) {
+      if (removed.has(settings[TYPE_SETTING_KEYS[type]])) {
+        writeSearchTypeBang(type, "");
+        customSearchTypeModes.delete(type);
+      }
+    }
+  }
+
+  function showSearchTypeControls(): void {
+    if (searchTypesEnabledCheckbox) {
+      searchTypesEnabledCheckbox.checked = settings.searchTypesEnabled;
+    }
+    if (searchTypesSettings) {
+      searchTypesSettings.hidden = !settings.searchTypesEnabled;
+    }
+
+    for (const control of searchTypeControls) {
+      const { type, provider, bang, hint } = control;
+      if (!provider || !bang) continue;
+
+      const label = SEARCH_TYPE_LABELS[type];
+      const mode = customSearchTypeModes.has(type)
+        ? "custom"
+        : configuredTypeProvider(type, settings);
+      const target = configuredTypeBang(type, settings);
+      const configured = settings[TYPE_SETTING_KEYS[type]];
+      const autoProvider = providerForType(type, settings.defaultBang);
+      const providerDefinition = SEARCH_PROVIDERS.find(
+        (item) => item.id === mode,
+      );
+      bang.closest(".search-type-controls")?.classList.toggle(
+        "has-custom-bang",
+        mode === "custom",
+      );
+
+      provider.value = mode;
+
+      const autoOption = provider.querySelector<HTMLOptionElement>(
+        'option[value="auto"]',
+      );
+      if (autoOption) {
+        autoOption.textContent = target
+          ? `Auto — !${target}`
+          : "Auto — follow default";
+      }
+
+      if (mode === "auto") {
+        bang.hidden = true;
+        bang.value = "";
+        bang.disabled = true;
+        bang.placeholder = target ? `Auto: !${target}` : "No default bang";
+        if (hint) {
+          if (target && autoProvider) {
+            hint.textContent = `Uses ${autoProvider.name} (!${target}) from your default !${settings.defaultBang}.`;
+          } else if (target) {
+            hint.textContent = `Uses !${target} from your default !${settings.defaultBang}.`;
+          } else {
+            hint.textContent = `Your default !${settings.defaultBang} has no ${label.toLowerCase()} bang. Choose a provider or Custom.`;
+          }
+        }
+      } else if (mode === "custom") {
+        bang.hidden = false;
+        bang.value = configured ? `!${configured}` : "";
+        bang.disabled = false;
+        bang.placeholder = "!bang";
+        if (hint) {
+          hint.textContent = configured
+            ? `Custom target: !${configured}. All ${label.toLowerCase()} shortcuts use this bang.`
+            : `Enter the bang that should handle ${label.toLowerCase()} searches.`;
+        }
+      } else {
+        bang.hidden = true;
+        bang.value = target ? `!${target}` : "";
+        bang.disabled = true;
+        bang.placeholder = "Provider bang";
+        if (hint) {
+          hint.textContent = `${providerDefinition?.name ?? "This provider"} ${label.toLowerCase()} searches use !${target}. Choose Custom to enter another bang.`;
+        }
+      }
+    }
+  }
+
+  async function saveCustomSearchTypeBang(
+    control: SearchTypeControl,
+  ): Promise<void> {
+    if (!control.bang) return;
+    const { type } = control;
+    const trigger = normalizeValidTrigger(control.bang.value);
+    if (!trigger) {
+      showToast(`Enter a valid ${SEARCH_TYPE_LABELS[type].toLowerCase()} bang.`);
+      showSearchTypeControls();
+      return;
+    }
+
+    if (SEARCH_TYPES.some((item) => SEARCH_TYPE_ALIASES[item].includes(trigger))) {
+      showToast(
+        `!${trigger} is already a generic search-type shortcut. Choose the real target bang.`,
+      );
+      showSearchTypeControls();
+      return;
+    }
+
+    const record = await catalog.lookupWithFull(trigger);
+    if (!record) {
+      showToast(`Bang !${trigger} does not exist.`);
+      showSearchTypeControls();
+      return;
+    }
+
+    writeSearchTypeBang(type, trigger);
+    showSearchTypeControls();
+    populateSuggestions();
+    showToast(`${SEARCH_TYPE_LABELS[type]} searches now use !${trigger}.`);
   }
 
   function populateSuggestions(): void {
@@ -747,7 +995,6 @@ function renderApp(): void {
     if (
       !disableDdgAdsCheckbox ||
       !disableDdgPromosCheckbox ||
-      !duckAssistSelect ||
       !disableGoogleAiOverviewCheckbox
     ) {
       return;
@@ -757,7 +1004,6 @@ function renderApp(): void {
         {
           ads: disableDdgAdsCheckbox,
           promos: disableDdgPromosCheckbox,
-          assist: duckAssistSelect,
           googleAi: disableGoogleAiOverviewCheckbox,
         },
       );
@@ -785,6 +1031,69 @@ function renderApp(): void {
       showToast(
         `!r site:reddit.com search: ${checked ? "enabled" : "disabled"}`,
       );
+    });
+  }
+
+  if (searchTypesEnabledCheckbox) {
+    searchTypesEnabledCheckbox.checked = settings.searchTypesEnabled;
+    searchTypesEnabledCheckbox.addEventListener("change", (event) => {
+      const checked = (event.target as HTMLInputElement).checked;
+      settings = { ...settings, searchTypesEnabled: checked };
+      writeSetting(storage, "searchTypesEnabled", checked);
+      showSearchTypeControls();
+      showToast(
+        `Separate search types: ${checked ? "enabled" : "disabled"}`,
+      );
+    });
+  }
+
+  for (const control of searchTypeControls) {
+    const { type, provider, bang } = control;
+    provider?.addEventListener("change", () => {
+      const value = provider.value;
+      if (value === "auto") {
+        customSearchTypeModes.delete(type);
+        writeSearchTypeBang(type, "");
+        showSearchTypeControls();
+        showToast(
+          `${SEARCH_TYPE_LABELS[type]} searches now follow your default provider.`,
+        );
+        return;
+      }
+
+      if (value === "custom") {
+        customSearchTypeModes.add(type);
+        writeSearchTypeBang(type, "");
+        showSearchTypeControls();
+        bang?.focus();
+        showToast(`Enter a custom ${SEARCH_TYPE_LABELS[type].toLowerCase()} bang.`);
+        return;
+      }
+
+      const target = providerBang(value as ProviderId, type);
+      if (!target) {
+        showToast(`That provider has no ${SEARCH_TYPE_LABELS[type].toLowerCase()} bang.`);
+        showSearchTypeControls();
+        return;
+      }
+
+      customSearchTypeModes.delete(type);
+      writeSearchTypeBang(type, target);
+      showSearchTypeControls();
+      populateSuggestions();
+      showToast(`${SEARCH_TYPE_LABELS[type]} searches now use !${target}.`);
+    });
+
+    bang?.addEventListener("change", () => {
+      void saveCustomSearchTypeBang(control);
+    });
+    bang?.addEventListener("focus", () => {
+      void loadFullSettingsSuggestions();
+    });
+    bang?.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      void saveCustomSearchTypeBang(control);
     });
   }
 
@@ -857,22 +1166,44 @@ function renderApp(): void {
     showToast(`DuckDuckGo promotions: ${checked ? "disabled" : "enabled"}`);
   });
 
-  duckAssistSelect?.addEventListener("change", (event) => {
-    const select = event.target as HTMLSelectElement;
-    settings = { ...settings, duckAssist: select.value };
-    writeSetting(storage, "duckAssist", select.value);
-    showToast(
-      `DuckDuckGo AI Overview set to: ${
-        select.options[select.selectedIndex].text
-      }`,
-    );
-  });
-
   disableGoogleAiOverviewCheckbox?.addEventListener("change", (event) => {
     const checked = (event.target as HTMLInputElement).checked;
     settings = { ...settings, disableGoogleAi: checked };
     writeSetting(storage, "disableGoogleAi", checked);
     showToast(`Google AI Overview: ${checked ? "disabled" : "enabled"}`);
+  });
+
+  defaultProviderSelect?.addEventListener("change", async () => {
+    if (defaultProviderSelect.value === "custom") {
+      defaultCustomMode = true;
+      showDefault();
+      requestAnimationFrame(() => defaultBangInput?.focus());
+      return;
+    }
+
+    const provider = SEARCH_PROVIDERS.find(
+      (item) => item.id === defaultProviderSelect.value && item.defaultBang,
+    );
+    if (!provider?.defaultBang) {
+      showToast("That default search provider is unavailable.");
+      showDefault();
+      return;
+    }
+
+    const record = await catalog.lookupWithFull(provider.defaultBang);
+    if (!record) {
+      showToast(`Bang !${provider.defaultBang} does not exist.`);
+      showDefault();
+      return;
+    }
+
+    defaultCustomMode = false;
+    setDefaultBang(provider.defaultBang);
+    showDefault();
+    populateSuggestions();
+    showSearchTypeControls();
+    await refreshSpecificSettings();
+    showToast(`Default search set to ${provider.name} (!${provider.defaultBang}).`);
   });
 
   saveDefaultBtn?.addEventListener("click", async () => {
@@ -891,9 +1222,11 @@ function renderApp(): void {
       return;
     }
 
+    defaultCustomMode = false;
     setDefaultBang(trigger);
     showDefault();
     populateSuggestions();
+    showSearchTypeControls();
     await refreshSpecificSettings();
     showToast(`Default bang set to !${trigger}`);
   });
@@ -904,6 +1237,11 @@ function renderApp(): void {
   });
   defaultBangInput?.addEventListener("focus", () => {
     void loadFullSettingsSuggestions();
+  });
+  defaultBangInput?.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    saveDefaultBtn?.click();
   });
   questionBangInput?.addEventListener("focus", () => {
     void loadFullSettingsSuggestions();
@@ -932,10 +1270,13 @@ function renderApp(): void {
           return itemIndex !== index;
         });
         setCustomBangs(next);
+        if (removed) clearSearchTypeBangsUsing(new Set([removed.t]));
 
         if (removed && settings.defaultBang === removed.t) {
+          defaultCustomMode = false;
           setDefaultBang(FALLBACK_BANG);
           showDefault();
+          showSearchTypeControls();
           await refreshSpecificSettings();
           showToast(
             `Custom bang !${removed.t} removed. Default bang reset to !${FALLBACK_BANG}.`,
@@ -951,6 +1292,7 @@ function renderApp(): void {
         }
 
         populateSuggestions();
+        showSearchTypeControls();
         renderCustom();
       });
 
@@ -988,15 +1330,24 @@ function renderApp(): void {
 
   type ResetKey = keyof typeof SETTINGS_DEFAULTS;
   const RESET_SECTIONS: Record<string, readonly ResetKey[]> = {
-    search: ["defaultBang"],
+    search: [
+      "defaultBang",
+      "searchTypesEnabled",
+      "imagesBang",
+      "videosBang",
+      "newsBang",
+    ],
     behavior: [
       "multiBangEnabled",
       "questionBangEnabled",
       "questionBang",
       "redditSiteSearch",
+    ],
+    ddg: [
+      "disableDdgAds",
+      "disableDdgPromos",
       "ddgAiQuickAnswers",
     ],
-    ddg: ["disableDdgAds", "disableDdgPromos", "duckAssist"],
     google: ["disableGoogleAi"],
     custom: [],
   };
@@ -1013,6 +1364,8 @@ function renderApp(): void {
   }
 
   function syncSettingsControls(): void {
+    defaultCustomMode = false;
+    customSearchTypeModes.clear();
     if (multiBangCheckbox) {
       multiBangCheckbox.checked = settings.multiBangEnabled;
     }
@@ -1025,9 +1378,6 @@ function renderApp(): void {
     if (disableDdgPromosCheckbox) {
       disableDdgPromosCheckbox.checked = settings.disableDdgPromos;
     }
-    if (duckAssistSelect) {
-      duckAssistSelect.value = settings.duckAssist;
-    }
     if (disableGoogleAiOverviewCheckbox) {
       disableGoogleAiOverviewCheckbox.checked = settings.disableGoogleAi;
     }
@@ -1037,6 +1387,7 @@ function renderApp(): void {
 
     showDefault();
     showQuestionBang();
+    showSearchTypeControls();
     populateSuggestions();
     renderCustom();
     void refreshSpecificSettings();
@@ -1045,8 +1396,10 @@ function renderApp(): void {
   function clearCustomBangs(): void {
     const removed = new Set(settings.customBangs.map((bang) => bang.t));
     setCustomBangs([]);
+    clearSearchTypeBangsUsing(removed);
 
     if (removed.has(settings.defaultBang)) {
+      defaultCustomMode = false;
       setDefaultBang(FALLBACK_BANG);
     }
     if (removed.has(settings.questionBang)) {
@@ -1122,6 +1475,7 @@ function renderApp(): void {
 
   showDefault();
   showQuestionBang();
+  showSearchTypeControls();
   populateSuggestions();
   renderCustom();
   void refreshSpecificSettings();

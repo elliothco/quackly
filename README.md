@@ -7,7 +7,8 @@ Quackly enhances your search experience, allowing you to quickly search websites
 ## ✨ Features
 
 *   **Blazing Fast Bang Searches:** Use `!<bang>` to directly search websites. Bangs are processed locally from a hot/cold data split, so common searches avoid loading the full directory.
-*   **Customizable Default Bang:** Set your preferred default search engine (e.g., `!g` for Google, `!ddg` for DuckDuckGo).
+*   **Customizable Default Search:** Pick Google, DuckDuckGo, Startpage, Kagi, Brave, Bing, Ecosia, Qwant, or Mojeek from a dropdown, or enter any custom bang.
+*   **Separate Image, Video, and News Shortcuts:** Optionally enable `!i` / `!images`, `!v` / `!videos`, and `!n` / `!news` with the matching provider. Each type can follow your default provider or use an independent provider or custom bang, including Google, DuckDuckGo, Startpage, Kagi, Brave, Bing, Ecosia, Qwant, Mojeek, and YouTube where that vertical is available.
 *   **Custom Bangs:** Add your own short, memorable bangs for any website.
 *   **Helium Bang Directory:** Supports Helium's bangs, aliases, and format flags, with a link to [Helium's searchable directory](https://helium.computer/bangs).
 *   **Question Mark Shortcut:** Optionally end a search with `?` to send it to a chosen bang, defaulting to `!ddg-ai` for DuckDuckGo AI. Disabled by default; explicit bangs take precedence.
@@ -16,7 +17,6 @@ Quackly enhances your search experience, allowing you to quickly search websites
     *   **Disable Google AI Overview.** (applies to any `!g` search)
     *   **Disable DuckDuckGo search ads.** (applies to any `!ddg` search)
     *   **Disable DuckDuckGo promotions.** (applies to any `!ddg` search)
-    *   **Control DuckDuckGo AI Overview appearance.** (applies to any `!ddg` search)
 *   **Multi-Bang Search:** Search multiple sites simultaneously. For example, "cats `!r` `!ddg` `!g`" opens results on Reddit, DuckDuckGo, and Google in separate tabs. *Requires pop-ups to be enabled for Quackly in your browser.*
 
 ## 🚀 Get Started
@@ -85,6 +85,7 @@ included in the hot bundle.
 Access Quackly's settings to customize your experience. You can:
 
 *   Change your default bang.
+*   Configure image, video, and news providers separately, with custom bang targets.
 *   Choose the bang used by the trailing `?` shortcut.
 *   Enable/disable Multi-Bang Search.
 *   Toggle `!r` behavior.

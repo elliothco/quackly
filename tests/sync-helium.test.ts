@@ -49,6 +49,11 @@ describe("Helium sync transforms", () => {
       "brave-images",
       "brave-videos",
       "brave-news",
+      "startpage-news",
+      "spn",
+      "startpagenews",
+      "mojeek-images",
+      "mojeekimages",
     ]);
     expect(records[0].canonical).toBe("g");
     expect(records[0].domain).toBe("www.google.com");

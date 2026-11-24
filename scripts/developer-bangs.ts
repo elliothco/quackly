@@ -58,4 +58,14 @@ export const developerBangs: readonly DeveloperBang[] = [
     trigger: "brave-news",
     url: "https://search.brave.com/news?q={searchTerms}",
   },
+  {
+    trigger: "startpage-news",
+    aliases: ["spn", "startpagenews"],
+    url: "https://startpage.com/do/metasearch.pl?query={searchTerms}&cat=news",
+  },
+  {
+    trigger: "mojeek-images",
+    aliases: ["mojeekimages"],
+    url: "https://www.mojeek.com/search?q={searchTerms}&fmt=images",
+  },
 ];

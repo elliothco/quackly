@@ -8,7 +8,6 @@ const baseSettings: Settings = {
   defaultBang: "ddg",
   disableDdgAds: true,
   disableDdgPromos: true,
-  duckAssist: "2",
   disableGoogleAi: false,
   customBangs: [],
   redditSiteSearch: true,
@@ -51,7 +50,6 @@ describe("resolveRoute", () => {
         defaultBang: "g",
         disableDdgAds: true,
         disableDdgPromos: true,
-        duckAssist: "0",
       },
       makeCatalog(),
     );
@@ -59,7 +57,6 @@ describe("resolveRoute", () => {
     if (route.kind === "single") {
       expect(route.url).toContain("k1=-1");
       expect(route.url).toContain("kak=-1");
-      expect(route.url).toContain("kbe=0");
     }
   });
 
@@ -91,6 +88,124 @@ describe("resolveRoute", () => {
     expect(route.kind).toBe("single");
     if (route.kind === "single") {
       expect(route.url).toBe("https://www.google.com/search?q=cats");
+    }
+  });
+
+  test("routes generic search types through the default provider", async () => {
+    const googleImages = await resolveRoute(
+      "!images cats",
+      { ...baseSettings, defaultBang: "g" },
+      makeCatalog(),
+    );
+    expect(googleImages.kind).toBe("single");
+    if (googleImages.kind === "single") {
+      expect(googleImages.url).toBe(
+        "https://google.com/search?tbm=isch&q=cats&tbs=imgo:1",
+      );
+    }
+
+    const ddgImages = await resolveRoute(
+      "!i cats",
+      baseSettings,
+      makeCatalog(),
+    );
+    expect(ddgImages.kind).toBe("single");
+    if (ddgImages.kind === "single") {
+      expect(ddgImages.url).toBe(
+        "https://duckduckgo.com/?q=cats&iax=images&ia=images",
+      );
+    }
+
+    const startpageVideos = await resolveRoute(
+      "!v cats",
+      { ...baseSettings, defaultBang: "startpage" },
+      makeCatalog(),
+    );
+    expect(startpageVideos.kind).toBe("single");
+    if (startpageVideos.kind === "single") {
+      expect(startpageVideos.url).toContain("startpage.com/do/search");
+      expect(startpageVideos.url).toContain("cat=video");
+    }
+  });
+
+  test("uses independent providers and custom targets for each search type", async () => {
+    const customCatalog = makeCatalog([
+      {
+        t: "my-images",
+        d: "images.example",
+        u: "https://images.example/?q=%s",
+      },
+    ]);
+    const settings: Settings = {
+      ...baseSettings,
+      defaultBang: "g",
+      imagesBang: "my-images",
+      videosBang: "qwv",
+      newsBang: "bnews",
+    };
+
+    const images = await resolveRoute("!i cats", settings, customCatalog);
+    expect(images.kind).toBe("single");
+    if (images.kind === "single") {
+      expect(images.url).toBe("https://images.example/?q=cats");
+    }
+
+    const videos = await resolveRoute("!videos cats", settings, customCatalog);
+    expect(videos.kind).toBe("single");
+    if (videos.kind === "single") {
+      expect(videos.url).toBe(
+        "https://www.qwant.com/?q=cats&t=videos",
+      );
+    }
+
+    const news = await resolveRoute("!n cats", settings, customCatalog);
+    expect(news.kind).toBe("single");
+    if (news.kind === "single") {
+      expect(news.url).toBe(
+        "https://www.bing.com/news/search?q=cats",
+      );
+    }
+  });
+
+  test("keeps explicit provider bangs and custom overrides ahead of type aliases", async () => {
+    const explicit = await resolveRoute(
+      "!bi cats",
+      { ...baseSettings, defaultBang: "g" },
+      makeCatalog(),
+    );
+    expect(explicit.kind).toBe("single");
+    if (explicit.kind === "single") {
+      expect(explicit.url).toContain("bing.com/images");
+    }
+
+    const custom = await resolveRoute(
+      "!i cats",
+      {
+        ...baseSettings,
+        customBangs: [
+          { t: "i", d: "example.com", u: "https://example.com/?q=%s" },
+        ],
+      },
+      makeCatalog([
+        { t: "i", d: "example.com", u: "https://example.com/?q=%s" },
+      ]),
+    );
+    expect(custom.kind).toBe("single");
+    if (custom.kind === "single") {
+      expect(custom.url).toBe("https://example.com/?q=cats");
+    }
+  });
+
+  test("can disable generic search type routing", async () => {
+    const route = await resolveRoute(
+      "!i cats",
+      { ...baseSettings, searchTypesEnabled: false },
+      makeCatalog(),
+    );
+    expect(route.kind).toBe("single");
+    if (route.kind === "single") {
+      expect(route.url).toContain("duckduckgo.com");
+      expect(route.url).toContain("q=cats");
     }
   });
 
@@ -380,6 +495,20 @@ describe("resolveRoute", () => {
     expect(route.triggers).toEqual(["g", "r"]);
     expect(route.urls).toHaveLength(2);
     expect(route.unresolved).toEqual([]);
+  });
+
+  test("resolves generic search types inside multi-bang searches", async () => {
+    const route = await resolveRoute(
+      "cats !i !n",
+      baseSettings,
+      makeCatalog(),
+    );
+    expect(route.kind).toBe("multi");
+    if (route.kind !== "multi") return;
+    expect(route.triggers).toEqual(["i", "n"]);
+    expect(route.unresolved).toEqual([]);
+    expect(route.urls[0]).toContain("iax=images");
+    expect(route.urls[1]).toContain("iar=news");
   });
 
   test("reports unresolved triggers alongside valid multi bangs", async () => {

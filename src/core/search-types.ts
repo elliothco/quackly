@@ -12,11 +12,13 @@ export type ProviderId =
   | "bing"
   | "ecosia"
   | "qwant"
-  | "mojeek";
+  | "mojeek"
+  | "youtube";
 
 export interface SearchProvider {
   id: ProviderId;
   name: string;
+  defaultBang?: string;
   bangs: Partial<Record<SearchType, string>>;
 }
 
@@ -24,21 +26,25 @@ export const SEARCH_PROVIDERS: readonly SearchProvider[] = [
   {
     id: "google",
     name: "Google",
+    defaultBang: "g",
     bangs: { images: "gi", videos: "gv", news: "gn" },
   },
   {
     id: "duckduckgo",
     name: "DuckDuckGo",
+    defaultBang: "ddg",
     bangs: { images: "ddgi", videos: "ddgv", news: "ddgn" },
   },
   {
     id: "startpage",
     name: "Startpage",
-    bangs: { images: "spi", videos: "spv" },
+    defaultBang: "startpage",
+    bangs: { images: "spi", videos: "spv", news: "startpage-news" },
   },
   {
     id: "kagi",
     name: "Kagi",
+    defaultBang: "kagi",
     bangs: {
       images: "kagi-images",
       videos: "kagi-videos",
@@ -48,6 +54,7 @@ export const SEARCH_PROVIDERS: readonly SearchProvider[] = [
   {
     id: "brave",
     name: "Brave",
+    defaultBang: "brave",
     bangs: {
       images: "brave-images",
       videos: "brave-videos",
@@ -57,22 +64,31 @@ export const SEARCH_PROVIDERS: readonly SearchProvider[] = [
   {
     id: "bing",
     name: "Bing",
+    defaultBang: "bing",
     bangs: { images: "bi", videos: "bv", news: "bnews" },
   },
   {
     id: "ecosia",
     name: "Ecosia",
+    defaultBang: "ecosia",
     bangs: { images: "ei" },
   },
   {
     id: "qwant",
     name: "Qwant",
+    defaultBang: "qwant",
     bangs: { images: "qwi", videos: "qwv", news: "qwn" },
   },
   {
     id: "mojeek",
     name: "Mojeek",
-    bangs: {},
+    defaultBang: "mojeek",
+    bangs: { images: "mojeek-images" },
+  },
+  {
+    id: "youtube",
+    name: "YouTube",
+    bangs: { videos: "yt" },
   },
 ] as const satisfies readonly SearchProvider[];
 
@@ -123,6 +139,8 @@ const DEFAULT_PROVIDER_ALIASES: Record<string, ProviderId> = {
   qwt: "qwant",
   qwant: "qwant",
   mojeek: "mojeek",
+  yt: "youtube",
+  youtube: "youtube",
 };
 
 export const TYPE_SETTING_KEYS = {

@@ -8,7 +8,7 @@ export const BANG_DATA_META = {
   "sourceGeneratedAt": "2026-11-10T08:56:42.761Z",
   "sha256": "00e9b1b0de6628f88ea4635e6c534bb3fd23433c171436bf69b22ed01523aa41",
   "records": 10735,
-  "triggers": 13438,
-  "hotTriggers": 332,
-  "developerBangs": 1
+  "triggers": 13449,
+  "hotTriggers": 372,
+  "developerBangs": 9
 } as const;

@@ -43,7 +43,6 @@ export interface Settings {
   defaultBang: string;
   disableDdgAds: boolean;
   disableDdgPromos: boolean;
-  duckAssist: string;
   disableGoogleAi: boolean;
   customBangs: CustomBang[];
   redditSiteSearch: boolean;

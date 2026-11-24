@@ -326,6 +326,8 @@ export const bangs = [
   ["драйв", "drive", "drive.google.com", "https://drive.google.com/drive/search?q={searchTerms}", "", "", 15],
   ["gdrive", "drive", "drive.google.com", "https://drive.google.com/drive/search?q={searchTerms}", "", "", 15],
   ["gmail", "gmail", "mail.google.com", "https://mail.google.com/mail/#search/{searchTerms}", "", "", 15],
+  ["ddg-ai", "ddg-ai", "duck.ai", "https://duck.ai/chat?ia=chat&duckai=1&home=1&q={searchTerms}", "", "", 13],
+  ["ddg-chat", "ddg-ai", "duck.ai", "https://duck.ai/chat?ia=chat&duckai=1&home=1&q={searchTerms}", "", "", 13],
   ["nixpkg", "nixpkg", "search.nixos.org", "https://search.nixos.org/packages?query={searchTerms}", "", "", 15],
   ["nixpkgs", "nixpkg", "search.nixos.org", "https://search.nixos.org/packages?query={searchTerms}", "", "", 15],
   ["twitch", "twitch", "twitch.tv", "https://twitch.tv/{searchTerms}", "", "", 15],

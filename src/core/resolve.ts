@@ -114,16 +114,24 @@ function appendDdgSettings(url: string, settings: Settings): string {
   }
 }
 
+function appendDdgAiPrompt(url: string): string {
+  try {
+    const parsed = new URL(url);
+    parsed.searchParams.set("prompt", "1");
+    return parsed.href;
+  } catch {
+    return url;
+  }
+}
+
 function buildBangUrl(
   record: BangRecord,
   rawQuery: string,
   settings: Settings,
-  applyDefaultSettings: boolean,
   defaultRecord: BangRecord,
 ): string | null {
   let selected = record;
   let query = rawQuery.trim();
-  let isDefault = applyDefaultSettings;
 
   if (
     (selected.canonical === "r" || selected.canonical === "reddit") &&
@@ -131,7 +139,6 @@ function buildBangUrl(
   ) {
     query = `${query} site:reddit.com`.trim();
     selected = defaultRecord;
-    isDefault = true;
   }
 
   const formatMask = effectiveFormatMask(selected);
@@ -149,8 +156,12 @@ function buildBangUrl(
     url = placeholderUrl(selected, encodeValue(query, formatMask));
   }
 
-  if (isDefault && selected.canonical === "dax") {
+  if (selected.canonical === "dax") {
     url = appendDdgSettings(url, settings);
+  }
+
+  if (selected.canonical === "ddg-ai" && settings.ddgAiQuickAnswers) {
+    url = appendDdgAiPrompt(url);
   }
 
   return url;
@@ -201,7 +212,6 @@ export async function resolveRoute(
           questionRecord,
           questionQuery,
           settings,
-          questionRecord.canonical === defaultRecord.canonical,
           defaultRecord,
         );
         if (url) return { kind: "single", url };
@@ -210,7 +220,7 @@ export async function resolveRoute(
   }
 
   if (parsed.candidates.length === 0) {
-    const url = buildBangUrl(defaultRecord, trimmed, settings, true, defaultRecord);
+    const url = buildBangUrl(defaultRecord, trimmed, settings, defaultRecord);
     return { kind: "single", url: url ?? fallbackUrl(trimmed) };
   }
 
@@ -232,7 +242,6 @@ export async function resolveRoute(
       record,
       parsed.query,
       settings,
-      record.canonical === defaultRecord.canonical,
       defaultRecord,
     );
     if (url) {
@@ -260,7 +269,6 @@ export async function resolveRoute(
     defaultRecord,
     parsed.query,
     settings,
-    true,
     defaultRecord,
   );
   return { kind: "single", url: fallback ?? fallbackUrl(parsed.query) };
@@ -293,7 +301,6 @@ export async function resolveMultiBangs(
       record,
       query,
       settings,
-      record.canonical === defaultRecord.canonical,
       defaultRecord,
     );
     if (!url) {

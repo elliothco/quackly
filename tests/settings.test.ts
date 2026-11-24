@@ -30,8 +30,9 @@ describe("settings", () => {
     expect(settings.duckAssist).toBe("2");
     expect(settings.disableGoogleAi).toBe(false);
     expect(settings.customBangs).toEqual([]);
-    expect(settings.questionBang).toBe("chatgpt");
+    expect(settings.questionBang).toBe("ddg-ai");
     expect(settings.questionBangEnabled).toBe(false);
+    expect(settings.ddgAiQuickAnswers).toBe(true);
   });
 
   test("normalizes saved default bangs", () => {

@@ -518,6 +518,12 @@ kbd {
     flex: 1;
 }
 
+.toggle-actions {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+}
+
 .toggle-title {
     display: block;
     color: var(--text-primary);
@@ -630,6 +636,11 @@ kbd {
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
+.setting-input:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
 .save-button {
     flex-shrink: 0;
     padding: 0.62rem 0.9rem;
@@ -643,6 +654,11 @@ kbd {
 
 .save-button:hover {
     background: var(--accent-hover);
+}
+
+.save-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
 }
 
 .current-note {
@@ -670,7 +686,95 @@ kbd {
 }
 
 .question-bang-settings {
+    margin-top: 0.25rem;
+}
+
+.question-bang-settings .setting-group {
+    margin-top: 0.7rem;
+}
+
+.reset-panel {
+    margin-top: 0.25rem;
+    color: var(--text-subtle);
+    font-size: 0.76rem;
+}
+
+.reset-panel summary {
+    display: inline-flex;
     align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.45rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    list-style: none;
+}
+
+.reset-panel summary::-webkit-details-marker {
+    display: none;
+}
+
+.reset-panel summary::before {
+    content: "↺";
+    font-size: 0.9rem;
+}
+
+.reset-panel summary:hover {
+    background: var(--surface-muted);
+    color: var(--text-secondary);
+}
+
+.reset-panel-body {
+    width: min(640px, 100%);
+    margin-top: 0.45rem;
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.reset-columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.reset-panel h4 {
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.76rem;
+    font-weight: 600;
+}
+
+.reset-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.reset-buttons button,
+.reset-danger {
+    padding: 0.35rem 0.55rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--input-bg);
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+}
+
+.reset-buttons button:hover {
+    border-color: var(--accent);
+    color: var(--accent-text);
+}
+
+.reset-danger {
+    margin-top: 0.9rem;
+    border-color: color-mix(in srgb, var(--danger) 35%, var(--border));
+    color: var(--danger);
+}
+
+.reset-danger:hover {
+    background: color-mix(in srgb, var(--danger) 8%, var(--surface));
 }
 
 .url-container {
@@ -895,6 +999,10 @@ kbd {
 
     .settings-card-wide {
         grid-column: auto;
+    }
+
+    .reset-columns {
+        grid-template-columns: 1fr;
     }
 
     .setting-group {

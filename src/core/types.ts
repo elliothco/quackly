@@ -50,6 +50,7 @@ export interface Settings {
   multiBangEnabled: boolean;
   questionBang: string;
   questionBangEnabled: boolean;
+  ddgAiQuickAnswers: boolean;
 }
 
 export type Route =

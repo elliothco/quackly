@@ -40,6 +40,10 @@ describe("generated Helium data", () => {
     expect(full.has("i")).toBe(false);
     expect(full.has("images")).toBe(false);
     expect(full.has("news")).toBe(false);
+    expect(full.get("ddg-ai")?.[3]).toBe(
+      "https://duck.ai/chat?ia=chat&duckai=1&home=1&q={searchTerms}",
+    );
+    expect(full.get("ddg-chat")?.[1]).toBe("ddg-ai");
   });
 
   test("keeps the hot subset small and includes the common triggers", () => {

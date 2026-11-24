@@ -13,8 +13,9 @@ const baseSettings: Settings = {
   customBangs: [],
   redditSiteSearch: true,
   multiBangEnabled: true,
-  questionBang: "chatgpt",
+  questionBang: "ddg-ai",
   questionBangEnabled: true,
+  ddgAiQuickAnswers: true,
 };
 
 function makeCatalog(customBangs: CustomBang[] = []): BangCatalog {
@@ -36,6 +37,26 @@ describe("resolveRoute", () => {
     expect(route.url).toContain("q=cats");
     expect(route.url).toContain("k1=-1");
     expect(route.url).toContain("kak=-1");
+  });
+
+  test("applies DuckDuckGo settings to explicit DDG searches", async () => {
+    const route = await resolveRoute(
+      "!ddg cats",
+      {
+        ...baseSettings,
+        defaultBang: "g",
+        disableDdgAds: true,
+        disableDdgPromos: true,
+        duckAssist: "0",
+      },
+      makeCatalog(),
+    );
+    expect(route.kind).toBe("single");
+    if (route.kind === "single") {
+      expect(route.url).toContain("k1=-1");
+      expect(route.url).toContain("kak=-1");
+      expect(route.url).toContain("kbe=0");
+    }
   });
 
   test("resolves Helium aliases through their canonical records", async () => {
@@ -203,9 +224,30 @@ describe("resolveRoute", () => {
     );
     expect(route.kind).toBe("single");
     if (route.kind === "single") {
-      expect(route.url).toContain("chatgpt.com");
-      expect(route.url).toContain("what+is+rust");
+      expect(route.url).toBe(
+        "https://duck.ai/chat?ia=chat&duckai=1&home=1&q=what+is+rust&prompt=1",
+      );
       expect(route.url).not.toContain("%3F");
+    }
+  });
+
+  test("toggles DuckDuckGo AI auto-start independent of the query", async () => {
+    const quick = await resolveRoute("!ddg-ai hello there", baseSettings, makeCatalog());
+    expect(quick.kind).toBe("single");
+    if (quick.kind === "single") {
+      expect(quick.url).toContain("q=hello+there");
+      expect(quick.url).toContain("prompt=1");
+    }
+
+    const regular = await resolveRoute(
+      "!ddg-chat hello there",
+      { ...baseSettings, ddgAiQuickAnswers: false },
+      makeCatalog(),
+    );
+    expect(regular.kind).toBe("single");
+    if (regular.kind === "single") {
+      expect(regular.url).toContain("q=hello+there");
+      expect(regular.url).not.toContain("prompt=1");
     }
   });
 

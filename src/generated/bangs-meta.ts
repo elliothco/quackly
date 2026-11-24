@@ -9,5 +9,6 @@ export const BANG_DATA_META = {
   "sha256": "00e9b1b0de6628f88ea4635e6c534bb3fd23433c171436bf69b22ed01523aa41",
   "records": 10735,
   "triggers": 13438,
-  "hotTriggers": 330
+  "hotTriggers": 332,
+  "developerBangs": 1
 } as const;

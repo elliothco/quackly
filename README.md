@@ -10,13 +10,13 @@ Quackly enhances your search experience, allowing you to quickly search websites
 *   **Customizable Default Bang:** Set your preferred default search engine (e.g., `!g` for Google, `!ddg` for DuckDuckGo).
 *   **Custom Bangs:** Add your own short, memorable bangs for any website.
 *   **Helium Bang Directory:** Supports Helium's bangs, aliases, and format flags, with a link to [Helium's searchable directory](https://helium.computer/bangs).
-*   **Question Mark Shortcut:** Optionally end a search with `?` to send it to a chosen bang, such as `!chatgpt`. Disabled by default; explicit bangs take precedence.
+*   **Question Mark Shortcut:** Optionally end a search with `?` to send it to a chosen bang, defaulting to `!ddg-ai` for DuckDuckGo AI. Disabled by default; explicit bangs take precedence.
 *   **Search Engine Enhancements:**
     *   **Option to change `!r` to `site:reddit.com` search.**
     *   **Disable Google AI Overview.** (applies to any `!g` search)
-    *   **Disable DuckDuckGo search ads.** (when using `!ddg` as default bang)
-    *   **Disable DuckDuckGo promotions.** (when using `!ddg` as default bang)
-    *   **Control DuckDuckGo AI Overview appearance.** (when using `!ddg` as default bang)
+    *   **Disable DuckDuckGo search ads.** (applies to any `!ddg` search)
+    *   **Disable DuckDuckGo promotions.** (applies to any `!ddg` search)
+    *   **Control DuckDuckGo AI Overview appearance.** (applies to any `!ddg` search)
 *   **Multi-Bang Search:** Search multiple sites simultaneously. For example, "cats `!r` `!ddg` `!g`" opens results on Reddit, DuckDuckGo, and Google in separate tabs. *Requires pop-ups to be enabled for Quackly in your browser.*
 
 ## 🚀 Get Started
@@ -67,6 +67,18 @@ bun run build
 ```
 
 Review and commit the changes under `src/generated/` and `scripts/hot-triggers.json`. `bun run sync:bangs` and `bun run update:bangs` both fetch the current Helium snapshot.
+
+### Add a Developer Bang or Override
+
+Edit `scripts/developer-bangs.ts`, add the trigger, optional aliases, URL
+template, and format flags, then run:
+
+```bash
+bun run sync:bangs
+```
+
+Developer bangs override Helium records with the same trigger and are always
+included in the hot bundle.
 
 ## 🛠️ Configuration
 

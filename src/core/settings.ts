@@ -12,10 +12,31 @@ export const LS_KEYS = {
   multiBangEnabled: "multi-bang-enabled",
   questionBang: "question-bang",
   questionBangEnabled: "question-bang-enabled",
+  ddgAiQuickAnswers: "ddg-ai-quick-answers",
 } as const;
 
 export const FALLBACK_BANG = "ddg";
-export const DEFAULT_QUESTION_BANG = "chatgpt";
+export const DEFAULT_QUESTION_BANG = "ddg-ai";
+
+export const SETTINGS_DEFAULTS = {
+  defaultBang: FALLBACK_BANG,
+  disableDdgAds: true,
+  disableDdgPromos: true,
+  duckAssist: "2",
+  disableGoogleAi: false,
+  redditSiteSearch: true,
+  multiBangEnabled: true,
+  questionBang: DEFAULT_QUESTION_BANG,
+  questionBangEnabled: false,
+  ddgAiQuickAnswers: true,
+} as const;
+
+export function createDefaultSettings(): Settings {
+  return {
+    ...SETTINGS_DEFAULTS,
+    customBangs: [],
+  };
+}
 
 export interface StorageLike {
   getItem(key: string): string | null;
@@ -99,7 +120,11 @@ export function parseCustomBangs(raw: string): CustomBang[] {
 }
 
 export function loadSettings(storage: StorageLike): Settings {
-  const duckAssist = getStr(storage, LS_KEYS.duckAssist, "2");
+  const duckAssist = getStr(
+    storage,
+    LS_KEYS.duckAssist,
+    SETTINGS_DEFAULTS.duckAssist,
+  );
   const storedQuestionBang = normalizeTrigger(
     getStr(storage, LS_KEYS.questionBang, DEFAULT_QUESTION_BANG),
   );
@@ -110,37 +135,46 @@ export function loadSettings(storage: StorageLike): Settings {
   return {
     defaultBang: isValidTrigger(storedDefault)
       ? storedDefault
-      : FALLBACK_BANG,
-    disableDdgAds: getBoolWithDefault(storage, LS_KEYS.disableDdgAds, true),
+      : SETTINGS_DEFAULTS.defaultBang,
+    disableDdgAds: getBoolWithDefault(
+      storage,
+      LS_KEYS.disableDdgAds,
+      SETTINGS_DEFAULTS.disableDdgAds,
+    ),
     disableDdgPromos: getBoolWithDefault(
       storage,
       LS_KEYS.disableDdgPromos,
-      true,
+      SETTINGS_DEFAULTS.disableDdgPromos,
     ),
     duckAssist: ["0", "1", "2", "3"].includes(duckAssist) ? duckAssist : "2",
     disableGoogleAi: getBoolWithDefault(
       storage,
       LS_KEYS.disableGoogleAi,
-      false,
+      SETTINGS_DEFAULTS.disableGoogleAi,
     ),
     customBangs: parseCustomBangs(getStr(storage, LS_KEYS.customBangs, "[]")),
     redditSiteSearch: getBoolWithDefault(
       storage,
       LS_KEYS.redditSiteSearch,
-      true,
+      SETTINGS_DEFAULTS.redditSiteSearch,
     ),
     multiBangEnabled: getBoolWithDefault(
       storage,
       LS_KEYS.multiBangEnabled,
-      true,
+      SETTINGS_DEFAULTS.multiBangEnabled,
     ),
     questionBang: isValidTrigger(storedQuestionBang)
       ? storedQuestionBang
-      : DEFAULT_QUESTION_BANG,
+      : SETTINGS_DEFAULTS.questionBang,
     questionBangEnabled: getBoolWithDefault(
       storage,
       LS_KEYS.questionBangEnabled,
-      false,
+      SETTINGS_DEFAULTS.questionBangEnabled,
+    ),
+    ddgAiQuickAnswers: getBoolWithDefault(
+      storage,
+      LS_KEYS.ddgAiQuickAnswers,
+      SETTINGS_DEFAULTS.ddgAiQuickAnswers,
     ),
   };
 }

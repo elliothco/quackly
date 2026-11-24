@@ -5,6 +5,8 @@ import { resolveRoute } from "./core/resolve";
 import {
   DEFAULT_QUESTION_BANG,
   FALLBACK_BANG,
+  LS_KEYS,
+  SETTINGS_DEFAULTS,
   loadSettings,
   validateCustomBang,
   writeCustomBangs,
@@ -44,11 +46,6 @@ function setDefaultBang(trigger: string): void {
 }
 
 async function updateBangSpecificSettings(
-  ddgGroups: readonly HTMLElement[],
-  ddgHints: readonly HTMLElement[],
-  googleGroups: readonly HTMLElement[],
-  googleHints: readonly HTMLElement[],
-  ddgCard: HTMLElement | null,
   controls: {
     ads: HTMLInputElement;
     promos: HTMLInputElement;
@@ -56,33 +53,14 @@ async function updateBangSpecificSettings(
     googleAi: HTMLInputElement;
   },
 ): Promise<void> {
-  for (const element of [...ddgGroups, ...ddgHints]) {
-    element.style.display = "none";
-  }
-  for (const element of googleGroups) element.style.display = "flex";
-  for (const element of googleHints) element.style.display = "block";
-
-  controls.ads.disabled = true;
-  controls.promos.disabled = true;
-  controls.assist.disabled = true;
-  controls.ads.checked = false;
-  controls.promos.checked = false;
-  controls.assist.value = "2";
+  controls.ads.disabled = false;
+  controls.promos.disabled = false;
+  controls.assist.disabled = false;
+  controls.ads.checked = settings.disableDdgAds;
+  controls.promos.checked = settings.disableDdgPromos;
+  controls.assist.value = settings.duckAssist;
   controls.googleAi.disabled = false;
   controls.googleAi.checked = settings.disableGoogleAi;
-
-  const record = await catalog.lookupWithFull(settings.defaultBang);
-  if (ddgCard) ddgCard.hidden = record?.canonical !== "dax";
-  if (record?.canonical === "dax") {
-    for (const group of ddgGroups) group.style.display = "flex";
-    for (const hint of ddgHints) hint.style.display = "block";
-    controls.ads.disabled = false;
-    controls.promos.disabled = false;
-    controls.assist.disabled = false;
-    controls.ads.checked = settings.disableDdgAds;
-    controls.promos.checked = settings.disableDdgPromos;
-    controls.assist.value = settings.duckAssist;
-  }
 }
 
 function renderApp(): void {
@@ -234,10 +212,12 @@ function renderApp(): void {
             Open several services at once, like <span class="bang-highlight">cats !r !ddg !g</span>.
           </p>
         </div>
-        <label class="switch">
-          <input type="checkbox" id="multi-bang-checkbox" class="setting-checkbox" aria-label="Enable Multi-Bang Search" />
-          <span class="switch-track" aria-hidden="true"></span>
-        </label>
+        <div class="toggle-actions">
+          <label class="switch">
+            <input type="checkbox" id="multi-bang-checkbox" class="setting-checkbox" aria-label="Enable Multi-Bang Search" />
+            <span class="switch-track" aria-hidden="true"></span>
+          </label>
+        </div>
       </div>
 
       <div class="toggle-row">
@@ -248,21 +228,40 @@ function renderApp(): void {
             <span class="bang-highlight current-question-bang"></span>.
           </p>
         </div>
-        <label class="switch">
-          <input type="checkbox" id="question-bang-enabled" class="setting-checkbox" aria-label="Enable trailing question mark shortcut" />
-          <span class="switch-track" aria-hidden="true"></span>
-        </label>
+        <div class="toggle-actions">
+          <label class="switch">
+            <input type="checkbox" id="question-bang-enabled" class="setting-checkbox" aria-label="Enable trailing question mark shortcut" />
+            <span class="switch-track" aria-hidden="true"></span>
+          </label>
+        </div>
       </div>
-      <div class="setting-group question-bang-settings" id="question-bang-settings" hidden>
-        <label for="question-bang-input" class="setting-label">Question Bang</label>
-        <input
-          type="text"
-          id="question-bang-input"
-          class="setting-input"
-          list="bang-suggestions"
-          placeholder="!chatgpt"
-        />
-        <button id="save-question-bang-btn" class="save-button" title="Save Question Bang">Save</button>
+      <div class="question-bang-settings" id="question-bang-settings" hidden>
+        <div class="setting-group">
+          <label for="question-bang-input" class="setting-label">Question Bang</label>
+          <input
+            type="text"
+            id="question-bang-input"
+            class="setting-input"
+            list="bang-suggestions"
+            placeholder="!ddg-ai"
+          />
+          <button id="save-question-bang-btn" class="save-button" title="Save Question Bang">Save</button>
+        </div>
+      </div>
+
+      <div class="toggle-row">
+        <div class="toggle-copy">
+          <label class="toggle-title" for="ddg-ai-quick-answers">DuckDuckGo AI quick answers</label>
+          <p class="toggle-description">
+            Start answering immediately with <span class="bang-highlight">!ddg-ai</span> or <span class="bang-highlight">!ddg-chat</span>. Turn off to open the chat with the prompt filled instead.
+          </p>
+        </div>
+        <div class="toggle-actions">
+          <label class="switch">
+            <input type="checkbox" id="ddg-ai-quick-answers" class="setting-checkbox" aria-label="Start DuckDuckGo AI answers immediately" />
+            <span class="switch-track" aria-hidden="true"></span>
+          </label>
+        </div>
       </div>
 
       <div class="toggle-row">
@@ -272,10 +271,12 @@ function renderApp(): void {
             Turn <span class="bang-highlight">!r</span> into a default-engine search for <span class="bang-highlight">site:reddit.com</span>.
           </p>
         </div>
-        <label class="switch">
-          <input type="checkbox" id="reddit-site-search-checkbox" class="setting-checkbox" aria-label="Use site:reddit.com for !r" />
-          <span class="switch-track" aria-hidden="true"></span>
-        </label>
+        <div class="toggle-actions">
+          <label class="switch">
+            <input type="checkbox" id="reddit-site-search-checkbox" class="setting-checkbox" aria-label="Use site:reddit.com for !r" />
+            <span class="switch-track" aria-hidden="true"></span>
+          </label>
+        </div>
       </div>
     </section>
 
@@ -284,12 +285,14 @@ function renderApp(): void {
       <div class="toggle-row bang-specific-setting-group ddg-specific">
         <div class="toggle-copy">
           <label class="toggle-title" for="disable-ddg-ads">Hide search ads</label>
-          <p class="toggle-description">Only applies while your default bang resolves to <span class="bang-highlight">!ddg</span>.</p>
+          <p class="toggle-description">Applies to any <span class="bang-highlight">!ddg</span> search.</p>
         </div>
-        <label class="switch">
-          <input type="checkbox" id="disable-ddg-ads" class="setting-checkbox" aria-label="Disable DuckDuckGo search ads" />
-          <span class="switch-track" aria-hidden="true"></span>
-        </label>
+        <div class="toggle-actions">
+          <label class="switch">
+            <input type="checkbox" id="disable-ddg-ads" class="setting-checkbox" aria-label="Disable DuckDuckGo search ads" />
+            <span class="switch-track" aria-hidden="true"></span>
+          </label>
+        </div>
       </div>
 
       <div class="toggle-row bang-specific-setting-group ddg-specific">
@@ -297,10 +300,12 @@ function renderApp(): void {
           <label class="toggle-title" for="disable-ddg-promos">Hide promotions</label>
           <p class="toggle-description">Removes extension reminders and other promotional content.</p>
         </div>
-        <label class="switch">
-          <input type="checkbox" id="disable-ddg-promos" class="setting-checkbox" aria-label="Disable DuckDuckGo promotions" />
-          <span class="switch-track" aria-hidden="true"></span>
-        </label>
+        <div class="toggle-actions">
+          <label class="switch">
+            <input type="checkbox" id="disable-ddg-promos" class="setting-checkbox" aria-label="Disable DuckDuckGo promotions" />
+            <span class="switch-track" aria-hidden="true"></span>
+          </label>
+        </div>
       </div>
 
       <div class="setting-group bang-specific-setting-group ddg-specific">
@@ -324,10 +329,12 @@ function renderApp(): void {
           <label class="toggle-title" for="disable-google-ai-overview">Hide AI Overview</label>
           <p class="toggle-description">Appends <code>-ai</code> to any Google search, including explicit <span class="bang-highlight">!g</span> searches.</p>
         </div>
-        <label class="switch">
-          <input type="checkbox" id="disable-google-ai-overview" class="setting-checkbox" aria-label="Disable Google AI Overview" />
-          <span class="switch-track" aria-hidden="true"></span>
-        </label>
+        <div class="toggle-actions">
+          <label class="switch">
+            <input type="checkbox" id="disable-google-ai-overview" class="setting-checkbox" aria-label="Disable Google AI Overview" />
+            <span class="switch-track" aria-hidden="true"></span>
+          </label>
+        </div>
       </div>
     </section>
 
@@ -346,6 +353,39 @@ function renderApp(): void {
       </div>
     </section>
     </div>
+    <details class="reset-panel">
+      <summary>Reset settings</summary>
+      <div class="reset-panel-body">
+        <div class="reset-columns">
+          <div>
+            <h4>Individual settings</h4>
+            <div class="reset-buttons">
+              <button type="button" data-reset-setting="defaultBang">Default bang</button>
+              <button type="button" data-reset-setting="multiBangEnabled">Multi-Bang Search</button>
+              <button type="button" data-reset-setting="questionBangEnabled">Trailing ? shortcut</button>
+              <button type="button" data-reset-setting="questionBang">Question bang</button>
+              <button type="button" data-reset-setting="ddgAiQuickAnswers">DuckDuckGo AI quick answers</button>
+              <button type="button" data-reset-setting="redditSiteSearch">Reddit site search</button>
+              <button type="button" data-reset-setting="disableDdgAds">DuckDuckGo ads</button>
+              <button type="button" data-reset-setting="disableDdgPromos">DuckDuckGo promotions</button>
+              <button type="button" data-reset-setting="duckAssist">DuckDuckGo AI Overview</button>
+              <button type="button" data-reset-setting="disableGoogleAi">Google AI Overview</button>
+            </div>
+          </div>
+          <div>
+            <h4>Sections</h4>
+            <div class="reset-buttons">
+              <button type="button" data-reset-section="search">Search</button>
+              <button type="button" data-reset-section="behavior">Behavior</button>
+              <button type="button" data-reset-section="ddg">DuckDuckGo</button>
+              <button type="button" data-reset-section="google">Google</button>
+              <button type="button" data-reset-section="custom">Custom bangs</button>
+            </div>
+          </div>
+        </div>
+        <button id="reset-all" class="reset-danger" type="button">Reset everything</button>
+      </div>
+    </details>
   </div>
 </div>
 
@@ -403,6 +443,9 @@ function renderApp(): void {
   const duckAssistSelect = $<HTMLSelectElement>("#duck-assist-select");
   const disableGoogleAiOverviewCheckbox = $<HTMLInputElement>(
     "#disable-google-ai-overview",
+  );
+  const ddgAiQuickAnswersCheckbox = $<HTMLInputElement>(
+    "#ddg-ai-quick-answers",
   );
 
   if (urlInput) urlInput.value = `${BASE_URL}?q=%s`;
@@ -692,19 +735,13 @@ function renderApp(): void {
     }, 2000);
   });
 
-  const ddgGroups = $all<HTMLElement>(
-    ".bang-specific-setting-group.ddg-specific",
-  );
-  const ddgHints = $all<HTMLElement>(
-    ".bang-specific-setting-hint.ddg-specific",
-  );
-  const googleGroups = $all<HTMLElement>(
-    ".bang-specific-setting-group.g-specific",
-  );
-  const googleHints = $all<HTMLElement>(
-    ".bang-specific-setting-hint.g-specific",
-  );
-  const ddgSettingsCard = $<HTMLElement>("#ddg-settings-card");
+  for (const element of $all<HTMLElement>(
+    ".bang-specific-setting-group.ddg-specific, .bang-specific-setting-hint.ddg-specific, .bang-specific-setting-group.g-specific, .bang-specific-setting-hint.g-specific",
+  )) {
+    element.style.display = element.classList.contains("toggle-row")
+      ? "flex"
+      : "block";
+  }
 
   async function refreshSpecificSettings(): Promise<void> {
     if (
@@ -717,11 +754,6 @@ function renderApp(): void {
     }
     try {
       await updateBangSpecificSettings(
-        [...ddgGroups],
-        [...ddgHints],
-        [...googleGroups],
-        [...googleHints],
-        ddgSettingsCard,
         {
           ads: disableDdgAdsCheckbox,
           promos: disableDdgPromosCheckbox,
@@ -752,6 +784,20 @@ function renderApp(): void {
       writeSetting(storage, "redditSiteSearch", checked);
       showToast(
         `!r site:reddit.com search: ${checked ? "enabled" : "disabled"}`,
+      );
+    });
+  }
+
+  if (ddgAiQuickAnswersCheckbox) {
+    ddgAiQuickAnswersCheckbox.checked = settings.ddgAiQuickAnswers;
+    ddgAiQuickAnswersCheckbox.addEventListener("change", (event) => {
+      const checked = (event.target as HTMLInputElement).checked;
+      settings = { ...settings, ddgAiQuickAnswers: checked };
+      writeSetting(storage, "ddgAiQuickAnswers", checked);
+      showToast(
+        `DuckDuckGo AI quick answers: ${
+          checked ? "enabled" : "disabled"
+        }`,
       );
     });
   }
@@ -938,6 +984,140 @@ function renderApp(): void {
         ? `Custom bang !${result.bang.t} updated.`
         : `Custom bang !${result.bang.t} added.`,
     );
+  });
+
+  type ResetKey = keyof typeof SETTINGS_DEFAULTS;
+  const RESET_SECTIONS: Record<string, readonly ResetKey[]> = {
+    search: ["defaultBang"],
+    behavior: [
+      "multiBangEnabled",
+      "questionBangEnabled",
+      "questionBang",
+      "redditSiteSearch",
+      "ddgAiQuickAnswers",
+    ],
+    ddg: ["disableDdgAds", "disableDdgPromos", "duckAssist"],
+    google: ["disableGoogleAi"],
+    custom: [],
+  };
+
+  function applyDefaultSettings(keys: readonly ResetKey[]): void {
+    for (const key of keys) {
+      settings = { ...settings, [key]: SETTINGS_DEFAULTS[key] } as Settings;
+      writeSetting(
+        storage,
+        key as keyof typeof LS_KEYS,
+        SETTINGS_DEFAULTS[key],
+      );
+    }
+  }
+
+  function syncSettingsControls(): void {
+    if (multiBangCheckbox) {
+      multiBangCheckbox.checked = settings.multiBangEnabled;
+    }
+    if (redditSiteSearchCheckbox) {
+      redditSiteSearchCheckbox.checked = settings.redditSiteSearch;
+    }
+    if (disableDdgAdsCheckbox) {
+      disableDdgAdsCheckbox.checked = settings.disableDdgAds;
+    }
+    if (disableDdgPromosCheckbox) {
+      disableDdgPromosCheckbox.checked = settings.disableDdgPromos;
+    }
+    if (duckAssistSelect) {
+      duckAssistSelect.value = settings.duckAssist;
+    }
+    if (disableGoogleAiOverviewCheckbox) {
+      disableGoogleAiOverviewCheckbox.checked = settings.disableGoogleAi;
+    }
+    if (ddgAiQuickAnswersCheckbox) {
+      ddgAiQuickAnswersCheckbox.checked = settings.ddgAiQuickAnswers;
+    }
+
+    showDefault();
+    showQuestionBang();
+    populateSuggestions();
+    renderCustom();
+    void refreshSpecificSettings();
+  }
+
+  function clearCustomBangs(): void {
+    const removed = new Set(settings.customBangs.map((bang) => bang.t));
+    setCustomBangs([]);
+
+    if (removed.has(settings.defaultBang)) {
+      setDefaultBang(FALLBACK_BANG);
+    }
+    if (removed.has(settings.questionBang)) {
+      settings = { ...settings, questionBang: DEFAULT_QUESTION_BANG };
+      writeSetting(storage, "questionBang", DEFAULT_QUESTION_BANG);
+    }
+  }
+
+  document
+    .querySelectorAll<HTMLButtonElement>("[data-reset-setting]")
+    .forEach((button) => {
+      button.addEventListener("click", () => {
+        const key = button.dataset.resetSetting as ResetKey | undefined;
+        if (!key) return;
+        applyDefaultSettings([key]);
+        syncSettingsControls();
+        showToast("Setting reset to default.");
+      });
+    });
+
+  document
+    .querySelectorAll<HTMLButtonElement>("[data-reset-section]")
+    .forEach((button) => {
+      button.addEventListener("click", () => {
+        const section = button.dataset.resetSection;
+        if (!section) return;
+
+        if (section === "custom") {
+          if (
+            !window.confirm(
+              "Remove all custom bangs and reset related defaults?",
+            )
+          ) {
+            return;
+          }
+          clearCustomBangs();
+        } else {
+          applyDefaultSettings(RESET_SECTIONS[section] ?? []);
+        }
+
+        syncSettingsControls();
+        showToast(`${section === "ddg" ? "DuckDuckGo" : section} reset.`);
+      });
+    });
+
+  const resetAllButton = $<HTMLButtonElement>("#reset-all");
+  resetAllButton?.addEventListener("click", () => {
+    if (
+      !window.confirm(
+        "Reset every Quackly setting and remove all custom bangs?",
+      )
+    ) {
+      return;
+    }
+
+    settings = {
+      ...SETTINGS_DEFAULTS,
+      customBangs: [],
+    };
+    for (const [key, value] of Object.entries(SETTINGS_DEFAULTS)) {
+      writeSetting(
+        storage,
+        key as keyof typeof LS_KEYS,
+        value,
+      );
+    }
+    writeCustomBangs(storage, []);
+    catalog.setCustomBangs([]);
+    setSetupCollapsed(false);
+    syncSettingsControls();
+    showToast("All settings reset.");
   });
 
   showDefault();

@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  applyDeveloperBangs,
   parseHeliumData,
   transformBangs,
   validateBangs,
@@ -40,11 +41,15 @@ describe("Helium sync transforms", () => {
       "goog",
       "google",
       "hn",
+      "ddg-ai",
+      "ddg-chat",
     ]);
     expect(records[0].canonical).toBe("g");
     expect(records[0].domain).toBe("www.google.com");
     expect(records[0].formatMask).toBe(15);
     expect(records[3].formatMask).toBe(14);
+    expect(records[4].template).toContain("duck.ai");
+    expect(records[5].canonical).toBe("ddg-ai");
   });
 
   test("rejects duplicate or malformed triggers", () => {
@@ -62,5 +67,35 @@ describe("Helium sync transforms", () => {
         },
       ]),
     ).toThrow("Duplicate Helium trigger");
+  });
+
+  test("developer bangs override existing triggers and add aliases", () => {
+    const records = applyDeveloperBangs(
+      [
+        {
+          trigger: "g",
+          canonical: "g",
+          domain: "www.google.com",
+          template: "https://www.google.com/search?q={searchTerms}",
+          snapDomain: "",
+          regex: "",
+          formatMask: 15,
+        },
+      ],
+      [
+        {
+          trigger: "g",
+          aliases: ["search"],
+          url: "https://example.com/?q=%s",
+          format: ["url_encode_placeholder", "url_encode_space_to_plus"],
+        },
+      ],
+    );
+
+    const google = records.find((record) => record.trigger === "g");
+    const alias = records.find((record) => record.trigger === "search");
+    expect(google?.template).toBe("https://example.com/?q={searchTerms}");
+    expect(alias?.canonical).toBe("g");
+    expect(alias?.formatMask).toBe(12);
   });
 });

@@ -1,19 +1,6 @@
 <!doctype html>
 <html lang="en">
     <head>
-        <!--
-            Ensures no old Service Workers interfere with page navigation or caching,
-            unregistering existing ones and registering a no-op Service Worker for cleanup.
-        -->
-        <script>
-            if ("serviceWorker" in navigator) {
-                navigator.serviceWorker
-                    .getRegistrations()
-                    .then((rs) => Promise.all(rs.map((r) => r.unregister())))
-                    .then(() => navigator.serviceWorker.register("/sw.js"))
-                    .catch(() => {});
-            }
-        </script>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Multi-Search</title>
@@ -203,21 +190,24 @@
 
             <!-- Fallback state displayed if automatic tab opening is blocked -->
             <div id="fallback-state" class="hidden">
-                <h1>Please Enable Pop-Ups</h1>
-                <p class="warning">Your browser blocked automatic tabs.</p>
-                <p class="message">
+                <h1 id="fallback-title">Please Enable Pop-Ups</h1>
+                <p id="fallback-warning" class="warning">
+                    Your browser blocked automatic tabs.
+                </p>
+                <p id="fallback-message" class="message">
                     Please allow pop-ups for <strong id="site-host"></strong> in
                     your browser settings, then:
                 </p>
                 <button id="openAllButton">Open Tabs</button>
                 <br />
                 <br />
-                <p class="message">
+                <p id="fallback-detail" class="message">
                     If you do that, going forward you will be able to open
                     multiple tabs automatically instead.
                 </p>
                 <br />
                 <br />
+                <a id="home-link" class="message" href="/">Return to Quackly</a>
             </div>
         </div>
 

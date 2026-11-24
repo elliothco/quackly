@@ -1,21 +1,8 @@
 <!doctype html>
 <html lang="en">
     <head>
-        <!--
-            Ensures no old Service Workers interfere with page navigation or caching,
-            unregistering existing ones and registering a no-op Service Worker for cleanup.
-        -->
-        <script>
-            if ("serviceWorker" in navigator) {
-                navigator.serviceWorker
-                    .getRegistrations()
-                    .then((rs) => Promise.all(rs.map((r) => r.unregister())))
-                    .then(() => navigator.serviceWorker.register("/sw.js"))
-                    .catch(() => {});
-            }
-        </script>
         <meta charset="UTF-8" />
-        <link rel="icon" type="image/svg+xml" href="/search.svg" />
+        <link rel="icon" type="image/svg+xml" href="./search.svg" />
         <!-- Preconnect to Google Fonts domains to speed up font loading. -->
         <link
             rel="preconnect"
